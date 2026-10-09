@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-09-gh1">
+<meta name="engawa-version" content="2026-10-09-gh2">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -622,6 +622,13 @@ textarea::placeholder{color:var(--roomSub)}
     try { if (sessionStorage.getItem('engawa-desk') === '1'){ want = true; sessionStorage.removeItem('engawa-desk'); } } catch (e) {}
     if (location.hash){ try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
     window.__wantDesk = want;
+    // 開いたままのページに #chouba を付けたときも、読み直して帳場へ
+    window.addEventListener('hashchange', function(){
+      if (location.hash !== '#chouba') return;
+      try { sessionStorage.setItem('engawa-desk', '1'); } catch (e) {}
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+      location.reload();
+    });
   })();
   window.ENGAWA_CONFIG = {
     firebase: {
