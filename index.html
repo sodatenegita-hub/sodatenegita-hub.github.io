@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-06-voice2">
+<meta name="engawa-version" content="2026-10-09-gh1">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -569,21 +569,21 @@ textarea::placeholder{color:var(--roomSub)}
     <div class="desk-add">
       <p class="desk-h">部屋をつくる</p>
       <input id="newName" type="text" maxlength="40" placeholder="部屋の名前（例：店長の相談室）" autocomplete="off">
-      <input id="newPhrase" type="text" maxlength="100" placeholder="合言葉" autocomplete="off" lang="ja">
+      <input id="newPhrase" type="text" maxlength="100" placeholder="合言葉" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" lang="ja">
       <button class="send" id="newMake" type="button">つくる</button>
       <p class="err" id="deskErr" role="status"></p>
     </div>
     <div class="desk-add">
       <p class="desk-h">奥の間の合言葉</p>
-      <input id="okuOld" type="text" placeholder="今の合言葉" autocomplete="off" lang="ja">
-      <input id="okuNew" type="text" placeholder="新しい合言葉" autocomplete="off" lang="ja">
+      <input id="okuOld" type="text" placeholder="今の合言葉" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" lang="ja">
+      <input id="okuNew" type="text" placeholder="新しい合言葉" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" lang="ja">
       <button class="send" id="okuChange" type="button">変える</button>
       <p class="err" id="okuChangeMsg" role="status"></p>
       <p class="desk-note">変えても、すでに開けている端末はそのまま見られます。新しく入る人だけが、新しい合言葉を使います。</p>
     </div>
     <div class="desk-add">
       <p class="desk-h">帳場に入る言葉</p>
-      <input id="deskWordIn" type="text" maxlength="100" placeholder="帳場" autocomplete="off" lang="ja">
+      <input id="deskWordIn" type="text" maxlength="100" placeholder="新しい言葉" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" lang="ja">
       <button class="send" id="deskWordSave" type="button">変える</button>
       <p class="err" id="deskWordMsg" role="status"></p>
       <p class="desk-note">合言葉の欄にこの言葉を入れて「開く」と、ここに来られます。縁側の中では、上の「縁側」の文字を長押しでも来られます。</p>
@@ -616,6 +616,13 @@ textarea::placeholder{color:var(--roomSub)}
   設定：ここだけ書き換えます（Firebaseの「マイアプリ」に出てくる値）
 ============================================================ -->
 <script>
+  // 帳場の鍵：#chouba は読んだらすぐURLから消す（履歴・共有に残さない）
+  (function(){
+    var want = location.hash === '#chouba';
+    try { if (sessionStorage.getItem('engawa-desk') === '1'){ want = true; sessionStorage.removeItem('engawa-desk'); } } catch (e) {}
+    if (location.hash){ try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+    window.__wantDesk = want;
+  })();
   window.ENGAWA_CONFIG = {
     firebase: {
       apiKey: "AIzaSyBQlZzuxsGjczgG130vvhjIJy3KDnnYdMw",
@@ -658,6 +665,7 @@ textarea::placeholder{color:var(--roomSub)}
         if ((r.user.email || '').toLowerCase() !== C.ownerEmail.toLowerCase()){ msg.textContent = 'このアカウントはオーナーとして登録されていません。'; return; }
         const me = doc(fs, 'users', r.user.uid);
         try { const d = await getDoc(me); if (!d.exists() || !d.data().name) await setDoc(me, { name: (r.user.displayName || 'オーナー').slice(0, 30) }); } catch {}
+        try { sessionStorage.setItem('engawa-desk', '1'); } catch {}
         location.replace(location.pathname);
       } catch (e) { msg.textContent = 'ログインできませんでした（' + (e.code || '') + '）。'; }
     });
@@ -695,7 +703,7 @@ textarea::placeholder{color:var(--roomSub)}
     let resolved = false;
     onAuthStateChanged(auth, async u => {
       if (!u){ try { await signInAnonymously(auth); } catch (e) { console.error('匿名ログインを有効にしてください', e); if (!resolved){ resolved = true; window.__engawaResolve(null); } } return; }
-      if (location.hash === '#chouba'){ if (!resolved){ resolved = true; window.__engawaResolve(null); } ownerLoginScreen(); return; }
+      if (window.__wantDesk && !(!u.isAnonymous && u.emailVerified && (u.email || '').toLowerCase() === C.ownerEmail.toLowerCase())){ if (!resolved){ resolved = true; window.__engawaResolve(null); } ownerLoginScreen(); return; }
       if (resolved) return; resolved = true;
       const owner = !u.isAnonymous && u.emailVerified && (u.email || '').toLowerCase() === C.ownerEmail.toLowerCase();
       const names = new Map();
@@ -1916,6 +1924,16 @@ textarea::placeholder{color:var(--roomSub)}
     }).sort((a,b) => (b.isNew - a.isNew) || (b.last - a.last) || ((b.createdAt||0) - (a.createdAt||0)));
     if (document.activeElement && document.activeElement.classList.contains('ri-name') && deskList.contains(document.activeElement)) return;  // 名前を編集中は描き直さない
     deskList.innerHTML = '';
+    { // 帳場に入る言葉も、部屋の合言葉と同じく「見る」を押したときだけ出す
+      const el = document.createElement('div'); el.className = 'ri';
+      const main = document.createElement('div'); main.className = 'ri-main';
+      const nm = document.createElement('p'); nm.className = 'ri-sub'; nm.style.cssText = 'margin:0 0 4px;font-weight:700;font-size:15px';
+      nm.textContent = '帳場に入る言葉';
+      const sub = document.createElement('p'); sub.className = 'ri-sub';
+      const ph = document.createElement('button'); ph.type = 'button'; ph.textContent = '言葉を見る';
+      ph.addEventListener('click', async () => { ph.textContent = ph.textContent === '言葉を見る' ? `言葉：${await deskWord()}` : '言葉を見る'; });
+      sub.append(ph); main.append(nm, sub); el.append(main); deskList.appendChild(el);
+    }
     if (!rows.length){ const p=document.createElement('p'); p.className='desk-empty'; p.textContent='まだ部屋がありません。下からつくれます。'; deskList.appendChild(p); return; }
     for (const r of rows){
       const el = document.createElement('div'); el.className = 'ri';
@@ -1947,7 +1965,7 @@ textarea::placeholder{color:var(--roomSub)}
   async function openDesk(){
     await capsReady;
     if (!isOwner || !db) return;
-    deskErr.textContent = ''; $('deskWordMsg').textContent = ''; $('deskWordIn').placeholder = await deskWord();
+    deskErr.textContent = ''; $('deskWordMsg').textContent = ''; $('deskWordIn').placeholder = '新しい言葉';
     desk.classList.add('open'); desk.setAttribute('aria-hidden','false');
     front.setAttribute('aria-hidden','true');
     renderDesk(); renderTipDesk(); $('tipMsg').textContent = '';
@@ -1964,6 +1982,28 @@ textarea::placeholder{color:var(--roomSub)}
     setTimeout(() => { resetTree(); zone.classList.remove('away'); busy = false; }, reduce ? 0 : 900);
   }
   $('deskClose').addEventListener('click', closeDeskToFront);
+  // #chouba で来たオーナーは、儀式なしでそのまま帳場へ
+  capsReady.then(async () => {
+    if (!window.__wantDesk) return;
+    window.__wantDesk = false;
+    if (!isOwner) return;
+    zone.classList.add('away'); busy = true;
+    await openDesk();
+  });
+  // 画面を離れたら表に戻す（帳場・縁側・合言葉の画面を開いたまま残さない）
+  function hideSecrets(){
+    try {
+      if (room.classList.contains('open')){ stopChat(); current = null; list.innerHTML = ''; room.classList.remove('open'); room.setAttribute('aria-hidden','true'); }
+      if (desk.classList.contains('open')){ desk.classList.remove('open'); desk.setAttribute('aria-hidden','true'); }
+      fromDesk = false;
+      if (gate.classList.contains('on')) resetGate();
+      ['pass','newPhrase','okuOld','okuNew','deskWordIn','input'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+      front.classList.remove('dim'); front.removeAttribute('aria-hidden');
+      resetTree(); zone.classList.remove('away'); busy = false;
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) hideSecrets(); });
+  window.addEventListener('pagehide', hideSecrets);
   async function goDeskFromGate(){                              // 合言葉の画面から帳場へ
     stopIdle();
     pass.blur();
@@ -2023,7 +2063,7 @@ textarea::placeholder{color:var(--roomSub)}
     const w = $('deskWordIn').value.normalize('NFKC').trim();
     if (!w){ $('deskWordMsg').textContent = '言葉を入れてください。'; return; }
     if ([...myRooms.values()].some(r => r.phrase === w)){ $('deskWordMsg').textContent = '部屋の合言葉と同じ言葉は使えません。'; return; }
-    try { await db.doc(`data/users/${myId}/settings`).set({ deskWord: w }); deskWordCache = w; $('deskWordIn').value = ''; $('deskWordIn').placeholder = w; $('deskWordMsg').textContent = '変えました。'; }
+    try { await db.doc(`data/users/${myId}/settings`).set({ deskWord: w }); deskWordCache = w; $('deskWordIn').value = ''; $('deskWordIn').placeholder = '新しい言葉'; $('deskWordMsg').textContent = '変えました。'; renderDesk(); }
     catch { $('deskWordMsg').textContent = '変えられませんでした。'; }
   });
   $('newMake').addEventListener('click', async () => {
