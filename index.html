@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-09-gh2">
+<meta name="engawa-version" content="2026-10-10-tools1">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -403,6 +403,42 @@ textarea::placeholder{color:var(--roomSub)}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;transition-delay:0s !important}
 }
+
+.okt{margin:28px 0 8px;padding-top:20px;border-top:1px solid rgba(128,128,128,.25)}
+.okt-h{font-size:17px;margin:0 0 12px}
+.okt-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.okt-btns button{font:inherit;font-size:14px;font-weight:700;line-height:1.35;padding:14px 6px;border-radius:14px;border:1px solid rgba(128,128,128,.3);background:transparent;color:inherit;cursor:pointer}
+.okt-btns button small{font-weight:400;font-size:11px;opacity:.75}
+.okt-btns button.on{background:#F7941D;border-color:#F7941D;color:#fff}
+.okt-p{margin-top:16px}
+.okt-s{font-size:13px;opacity:.75;margin:0 0 10px;line-height:1.6}
+.okt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.okt-chips button{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer}
+.okt-chips button.on{border-color:#F7941D;color:#F7941D;font-weight:700}
+.jt-card{border-radius:14px;padding:16px;background:rgba(247,148,29,.08)}
+.jt-say{font-size:17px;font-weight:700;line-height:1.6;margin:4px 0 12px}
+.jt-k{font-size:11px;letter-spacing:.08em;opacity:.65;margin:10px 0 2px}
+.jt-why{font-size:14px;line-height:1.7;margin:0}
+.jt-ng{font-size:14px;line-height:1.6;margin:0;opacity:.7;text-decoration:line-through;text-decoration-thickness:1px}
+.jt-draft{font-size:11px;opacity:.55;margin-top:12px}
+.okt-l{display:block;font-size:13px;margin:0 0 10px}
+.okt-l input,.okt-l textarea,.okt-imp textarea,.rc-ing input{display:block;width:100%;box-sizing:border-box;margin-top:4px;font:inherit;font-size:16px;padding:9px 10px;border-radius:10px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit}
+.okt-row{display:flex;gap:8px;flex-wrap:wrap}.okt-row .okt-l{flex:1;min-width:130px}
+.okt-go{font:inherit;font-weight:700;padding:10px 20px;border-radius:999px;border:0;background:#F7941D;color:#fff;cursor:pointer}
+.okt-sub{font:inherit;font-size:13px;padding:9px 14px;border-radius:999px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer;margin:4px 0}
+.okt-msg{font-size:13px;min-height:1em;margin:8px 0}
+.ip-day{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(128,128,128,.18);font-size:13px;line-height:1.6}
+.ip-day b{flex:none;width:3.6em;opacity:.7;font-weight:700}
+.ip-streak{font-size:14px;font-weight:700;margin:14px 0 4px}
+.rc-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid rgba(128,128,128,.18);cursor:pointer}
+.rc-item span{font-size:12px;opacity:.7}
+.rc-ing{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:4px;margin-bottom:6px;align-items:end}
+.rc-ing input{font-size:14px;padding:7px 6px;margin:0}
+.rc-ing button{font:inherit;border:0;background:transparent;color:inherit;opacity:.5;cursor:pointer;padding:6px}
+.rc-head{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:4px;font-size:11px;opacity:.6;margin-bottom:2px}
+.okt-sum{border-radius:12px;padding:12px 14px;background:rgba(247,148,29,.08);margin:12px 0;font-size:14px;line-height:1.8}
+.okt-sum b{font-size:18px}
+.okt-imp{margin-top:18px;font-size:13px}
 </style>
 </head>
 <body>
@@ -488,6 +524,48 @@ textarea::placeholder{color:var(--roomSub)}
       <div class="ok-tabs" id="okTabs" role="tablist"></div>
       <div class="ok-chips" id="okChips"></div>
       <div class="ok-list" id="okList"></div>
+      <div class="okt" id="okTools">
+        <h3 class="okt-h">道具</h3>
+        <div class="okt-btns" role="tablist">
+          <button type="button" data-t="jiten">困った瞬間の<br>ひとこと辞典</button>
+          <button type="button" data-t="ippo">今日の1点<br><small>30秒の振り返り</small></button>
+          <button type="button" data-t="recipe">レシピと<br>原価</button>
+        </div>
+        <div class="okt-p" id="okt-jiten" hidden>
+          <p class="okt-s">場面を選ぶと、そのまま使えるひとことが出ます。</p>
+          <div class="okt-chips" id="jtChips"></div>
+          <div id="jtCard"></div>
+        </div>
+        <div class="okt-p" id="okt-ippo" hidden>
+          <p class="okt-s">営業のあとに、2つだけ。記録はこの端末の中にだけ残ります。</p>
+          <label class="okt-l">よかった1点<textarea id="ipGood" rows="2" maxlength="200" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></label>
+          <label class="okt-l">次の1点<textarea id="ipNext" rows="2" maxlength="200" autocomplete="off" autocorrect="off" spellcheck="false"></textarea></label>
+          <button type="button" class="okt-go" id="ipSave">残す</button>
+          <p class="okt-msg" id="ipMsg"></p>
+          <div id="ipWeek"></div>
+        </div>
+        <div class="okt-p" id="okt-recipe" hidden>
+          <p class="okt-s">材料の仕入れ値を入れると、1人前の原価と原価率を計算します。記録はこの端末の中にだけ残ります。</p>
+          <div id="rcList"></div>
+          <button type="button" class="okt-sub" id="rcNew">＋ 新しいレシピ</button>
+          <div id="rcEdit" hidden>
+            <label class="okt-l">料理名<input id="rcName" type="text" maxlength="60" autocomplete="off"></label>
+            <div class="okt-row"><label class="okt-l">売る値段（円・税込）<input id="rcPrice" type="number" inputmode="numeric" min="0"></label>
+            <label class="okt-l">目標の原価率（％）<input id="rcGoal" type="number" inputmode="numeric" min="1" max="100" value="30"></label></div>
+            <p class="okt-s">材料：仕入れ値・仕入れた量・1人前で使う量（単位はそろえてください）</p>
+            <div id="rcIng"></div>
+            <button type="button" class="okt-sub" id="rcAddIng">＋ 材料を足す</button>
+            <div class="okt-sum" id="rcSum"></div>
+            <label class="okt-l">作り方<textarea id="rcHow" rows="4" maxlength="2000"></textarea></label>
+            <div class="okt-row"><button type="button" class="okt-go" id="rcSave">残す</button><button type="button" class="okt-sub" id="rcShare">仲間に送る文字をつくる</button><button type="button" class="okt-sub" id="rcDel">消す</button></div>
+            <p class="okt-msg" id="rcMsg"></p>
+          </div>
+          <details class="okt-imp"><summary>仲間から届いたレシピを入れる</summary>
+            <textarea id="rcImp" rows="3" placeholder="届いた文字をここに貼る"></textarea>
+            <button type="button" class="okt-sub" id="rcImpGo">入れる</button>
+          </details>
+        </div>
+      </div>
     </div>
   </section>
   <p class="foot" data-i18n="foot">木は、縁に囲まれて育つ。</p>
@@ -2113,5 +2191,88 @@ textarea::placeholder{color:var(--roomSub)}
 })();
 </script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}</script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var store={get:function(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}};
+  // ---- 切り替え ----
+  var btns=[].slice.call(document.querySelectorAll('#okTools .okt-btns button'));
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var t=b.dataset.t, open=!b.classList.contains('on');
+    btns.forEach(function(x){x.classList.remove('on');});
+    ['jiten','ippo','recipe'].forEach(function(k){$('okt-'+k).hidden=true;});
+    if(open){b.classList.add('on');$('okt-'+t).hidden=false;if(t==='ippo')ipRender();if(t==='recipe')rcRender();}
+  });});
+  // ---- 1. ひとこと辞典（下書き：ネギさんの言い方で直していく） ----
+  var JT=[
+    {s:'料理が遅れている',say:'お待たせしてすみません。あと5分で焼き上がります',why:'いつまで待つのかがわかると、お客様は安心できます。待つ時間も、楽しめる時間に変わります',ng:'少々お待ちください'},
+    {s:'メニューで迷っている',say:'お悩みですか？',why:'決めることを急かさず、相談に乗るひとことです。注文の時間が、会話の時間に変わります',ng:'お決まりですか？'},
+    {s:'満席の電話',say:'〇時からならご用意できます。いかがですか？',why:'断るのはお店ではなく、お客様。時間や日をずらした案を出して、選ぶのはお客様にしておきます',ng:'満席です'},
+    {s:'待ってもらうとき',say:'〇〇なので、〇分だけお待ちいただけますか？',why:'理由と時間を添えて、お願いの形にします。待つかどうかを、お客様が選べます',ng:'少々お待ちください'},
+    {s:'売り切れ',say:'〇〇と同じくらい人気の、△△はいかがですか？',why:'売り切れた料理を下げずに、同じくらい価値のあるものを差し出します',ng:'〇〇より美味しいですよ'},
+    {s:'お水を頼まれた',say:'（理由を想像して）お持ちしますね',why:'同じ「お水ください」はひとつもありません。薬を飲む、酔いをさましたい、口直し。理由がわかると、出し方が変わります',ng:'何も考えずに、いつもの水を出す'},
+    {s:'おかわりを頼まれた',say:'（頼まれた瞬間に）どうぞ',why:'空きそうなグラスを見ておけば、頼まれた瞬間に出せます。待たせない一杯が、次の一杯を呼びます',ng:'少々お待ちください'}
+  ];
+  var cur=0;
+  function jtRender(){
+    $('jtChips').innerHTML=JT.map(function(e,i){return '<button type="button" data-i="'+i+'"'+(i===cur?' class="on"':'')+'>'+esc(e.s)+'</button>';}).join('');
+    var e=JT[cur];
+    $('jtCard').innerHTML='<div class="jt-card"><p class="jt-k">SODATEのひとこと</p><p class="jt-say">'+esc(e.say)+'</p><p class="jt-k">なぜ</p><p class="jt-why">'+esc(e.why)+'</p><p class="jt-k">言いがちな、もったいない一言</p><p class="jt-ng">'+esc(e.ng)+'</p></div>';
+  }
+  $('jtChips').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;cur=+b.dataset.i;jtRender();});
+  jtRender();
+  // ---- 2. 今日の1点 ----
+  var IPK='engawa-ippo';
+  function dkey(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+  function ipRender(){
+    var all=store.get(IPK,{}), today=new Date(), rows='', streak=0, i, d, k;
+    var t=all[dkey(today)]; if(t){$('ipGood').value=t.g||'';$('ipNext').value=t.n||'';}
+    for(i=0;i<60;i++){d=new Date(today);d.setDate(today.getDate()-i);if(all[dkey(d)])streak++;else if(i>0)break;}
+    for(i=0;i<7;i++){d=new Date(today);d.setDate(today.getDate()-i);k=dkey(d);var e=all[k];
+      rows+='<div class="ip-day"><b>'+(d.getMonth()+1)+'/'+d.getDate()+'</b><div>'+(e?('◎ '+esc(e.g)+'<br>→ '+esc(e.n)):'<span style="opacity:.4">—</span>')+'</div></div>';}
+    $('ipWeek').innerHTML=(streak?'<p class="ip-streak">'+streak+'日続いています</p>':'<p class="ip-streak">ここから1日目</p>')+rows;
+  }
+  $('ipSave').addEventListener('click',function(){
+    var g=$('ipGood').value.trim(),n=$('ipNext').value.trim();
+    if(!g&&!n){$('ipMsg').textContent='どちらか1つだけでも大丈夫です。';return;}
+    var all=store.get(IPK,{});all[dkey(new Date())]={g:g,n:n};
+    var ks=Object.keys(all).sort();while(ks.length>120){delete all[ks.shift()];}
+    $('ipMsg').textContent=store.set(IPK,all)?'残しました。今日もお疲れさまでした。':'この端末では残せませんでした。';ipRender();
+  });
+  // ---- 3. レシピと原価 ----
+  var RCK='engawa-recipes', edit=null;
+  function yen(n){return isFinite(n)?Math.round(n).toLocaleString('ja-JP')+'円':'—';}
+  function rows(){return [].slice.call(document.querySelectorAll('#rcIng .rc-ing')).map(function(r){var v=r.querySelectorAll('input');return {n:v[0].value,p:+v[1].value||0,q:+v[2].value||0,u:+v[3].value||0};});}
+  function cost(list){return list.reduce(function(s,x){return s+(x.q>0?x.p*x.u/x.q:0);},0);}
+  function ingRow(x){var d=document.createElement('div');d.className='rc-ing';
+    d.innerHTML='<input placeholder="例：鶏もも" value="'+esc(x.n||'')+'"><input type="number" inputmode="decimal" placeholder="仕入れ値" value="'+(x.p||'')+'"><input type="number" inputmode="decimal" placeholder="仕入れた量" value="'+(x.q||'')+'"><input type="number" inputmode="decimal" placeholder="使う量" value="'+(x.u||'')+'"><button type="button" aria-label="この材料を消す">×</button>';
+    d.querySelector('button').addEventListener('click',function(){d.remove();sum();});
+    d.addEventListener('input',sum);$('rcIng').appendChild(d);}
+  function sum(){
+    var c=cost(rows()),p=+$('rcPrice').value||0,g=(+$('rcGoal').value||30)/100;
+    var rate=p>0?c/(p/1.1):NaN, sug=g>0?Math.ceil(c/g*1.1/10-1e-9)*10:NaN;
+    $('rcSum').innerHTML='1人前の原価 <b>'+yen(c)+'</b><br>原価率 <b>'+(isFinite(rate)?(rate*100).toFixed(1)+'％':'—')+'</b>（税抜きの値段で計算）<br>目標'+Math.round(g*100)+'％にするなら、値段の目安 <b>'+(c>0?yen(sug):'—')+'</b>（税込）';
+  }
+  ['rcPrice','rcGoal'].forEach(function(id){$(id).addEventListener('input',sum);});
+  function openEdit(r){edit=r||{id:Date.now().toString(36),name:'',price:'',goal:30,ing:[{}],how:''};
+    $('rcEdit').hidden=false;$('rcName').value=edit.name;$('rcPrice').value=edit.price;$('rcGoal').value=edit.goal||30;$('rcHow').value=edit.how||'';
+    $('rcIng').innerHTML='<div class="rc-head"><span>材料</span><span>仕入れ値</span><span>仕入れた量</span><span>使う量</span><span></span></div>';
+    (edit.ing&&edit.ing.length?edit.ing:[{}]).forEach(ingRow);$('rcMsg').textContent='';sum();$('rcName').focus();}
+  function collect(){return {id:edit.id,name:$('rcName').value.trim()||'名前のない料理',price:+$('rcPrice').value||'',goal:+$('rcGoal').value||30,ing:rows().filter(function(x){return x.n||x.p||x.u;}),how:$('rcHow').value};}
+  function rcRender(){var list=store.get(RCK,[]);
+    $('rcList').innerHTML=list.length?list.map(function(r){var c=cost(r.ing||[]);return '<div class="rc-item" data-id="'+r.id+'"><div>'+esc(r.name)+'</div><span>原価 '+yen(c)+(r.price?' ／ '+(c/(r.price/1.1)*100).toFixed(1)+'％':'')+'</span></div>';}).join(''):'<p class="okt-s">まだレシピはありません。</p>';}
+  $('rcList').addEventListener('click',function(ev){var it=ev.target.closest('.rc-item');if(!it)return;var r=store.get(RCK,[]).filter(function(x){return x.id===it.dataset.id;})[0];if(r)openEdit(r);});
+  $('rcNew').addEventListener('click',function(){openEdit(null);});
+  $('rcAddIng').addEventListener('click',function(){ingRow({});});
+  $('rcSave').addEventListener('click',function(){var r=collect(),list=store.get(RCK,[]).filter(function(x){return x.id!==r.id;});list.unshift(r);
+    $('rcMsg').textContent=store.set(RCK,list)?'残しました。':'この端末では残せませんでした。';edit=r;rcRender();});
+  $('rcDel').addEventListener('click',function(){if(!edit||!confirm('このレシピを消しますか？'))return;store.set(RCK,store.get(RCK,[]).filter(function(x){return x.id!==edit.id;}));$('rcEdit').hidden=true;rcRender();});
+  $('rcShare').addEventListener('click',function(){var r=collect();var txt='SODATEレシピ:'+btoa(unescape(encodeURIComponent(JSON.stringify(r))));
+    var done=function(){$('rcMsg').textContent='送る文字をコピーしました。仲間にだけ送ってください（仕入れ値も入っています）。';};
+    if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done,function(){prompt('この文字をコピーして送ってください',txt);});else prompt('この文字をコピーして送ってください',txt);});
+  $('rcImpGo').addEventListener('click',function(){var t=$('rcImp').value.trim();try{var r=JSON.parse(decodeURIComponent(escape(atob(t.replace(/^SODATEレシピ:/,'')))));r.id=Date.now().toString(36);var list=store.get(RCK,[]);list.unshift(r);store.set(RCK,list);$('rcImp').value='';rcRender();openEdit(r);$('rcMsg').textContent='届いたレシピを入れました。';}catch(e){alert('読み取れませんでした。届いた文字をそのまま貼ってください。');}});
+})();
+</script>
 </body>
 </html>
