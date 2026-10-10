@@ -1,0 +1,35 @@
+name: fetch-voice
+on:
+  push:
+    paths: ['.github/workflows/fetch-voice.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 縁側の声をNetlifyから取ってくる
+        run: |
+          set -e
+          B=https://glowing-paletas-34ae3b.netlify.app
+          curl -sfL $B/ -o /tmp/old.html
+          grep -o '"f":"[^"]*"' /tmp/old.html | sort -u | tee /tmp/paths.txt || true
+          grep -o "voice/[A-Za-z0-9_-]*\.\(m4a\|bin\|mp3\)" /tmp/old.html | sort -u >> /tmp/paths2.txt || true
+          grep -o "a/[A-Za-z0-9_-]*\.\(m4a\|bin\|mp3\)" /tmp/old.html | sort -u >> /tmp/paths2.txt || true
+          cat /tmp/paths2.txt
+          mkdir -p voice
+          for s in hanpomae okureru miss glass egao manseki; do
+            for p in voice/$s.m4a voice/$s.bin a/$s.m4a a/$s.bin; do
+              if curl -sfL "$B/$p" -o /tmp/x; then echo "OK $p $(stat -c%s /tmp/x)"; cp /tmp/x "voice/$(basename $p)"; fi
+            done
+          done
+          ls -la voice
+      - name: 置く
+        run: |
+          git config user.name sodate-bot
+          git config user.email sodate.negita@gmail.com
+          git add voice
+          git commit -m "縁側の声をNetlifyから移す" || echo nothing
+          git push
