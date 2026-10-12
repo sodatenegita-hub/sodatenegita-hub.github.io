@@ -344,6 +344,11 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .room-title{font-size:20px;font-weight:700;letter-spacing:.08em}
 .room-title small{display:block;font-size:12px;font-weight:400;color:var(--roomSub);letter-spacing:0}
 .head-btns{display:flex;gap:8px}
+.adm{display:inline-flex;align-items:center;gap:4px;margin-left:10px;vertical-align:3px;font-size:11px;font-weight:700;letter-spacing:.12em;color:#2A1A0C;background:#F7941D;border-radius:999px;padding:3px 9px 3px 7px}
+.adm svg{width:12px;height:12px;fill:none;stroke:#2A1A0C;stroke-width:1.8;stroke-linecap:round}
+.adm[hidden]{display:none}
+.room.admin .room-head{box-shadow:inset 0 -2px 0 #F7941D}
+
 .back[hidden],.desklink[hidden]{display:none}
 .desklink{display:block;margin:22px auto 0;background:none;border:0;color:var(--roomSub);font-size:13px;letter-spacing:.2em;cursor:pointer;opacity:.75}
 .desk{position:fixed;inset:0;z-index:32;background:var(--room);color:var(--roomInk);display:flex;flex-direction:column;
@@ -736,7 +741,7 @@ textarea::placeholder{color:var(--roomSub)}
 
 <section class="room" id="room" aria-label="縁側" aria-hidden="true">
   <header class="room-head">
-    <div class="room-title">縁側<small id="roomSub">合言葉を知る人だけの相談室</small></div>
+    <div class="room-title">縁側<span class="adm" id="admBadge" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5.5" cy="8" r="3.2"/><path d="M8.6 8H15M12.5 8v2.6M14.6 8v1.8"/></svg>管理者</span><small id="roomSub">合言葉を知る人だけの相談室</small></div>
     <div class="head-btns"><button class="back" id="toDesk" type="button" hidden>帳場</button><button class="back" id="back" type="button">戻る</button></div>
   </header>
   <div class="namebar" id="namebar" hidden>
@@ -2132,6 +2137,7 @@ textarea::placeholder{color:var(--roomSub)}
     const meta = myRooms.get(k.id);
     $('roomSub').textContent = (isOwner && meta && meta.label) ? meta.label : '合言葉を知る人だけの相談室';
     $('toDesk').hidden = true;
+    $('admBadge').hidden = !isOwner; $('room').classList.toggle('admin', !!isOwner);   // 管理者として入っているときの目印
   }
   function renderDesk(){
     if (!isOwner || !desk.classList.contains('open')) return;
