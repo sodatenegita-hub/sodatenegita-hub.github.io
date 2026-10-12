@@ -160,11 +160,12 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .today::before,.today::after{content:"";position:absolute;left:50%;width:44px;height:1px;background:var(--orange);opacity:.55;transform:translateX(-50%)}
 .today::before{top:0}.today::after{bottom:-6px;display:none}
 .today-q{position:absolute;left:50%;top:-2px;transform:translateX(-50%);font-family:Georgia,"Times New Roman",serif;font-size:76px;line-height:1;color:var(--orange);opacity:.22;pointer-events:none}
-.today-w{margin:0;font-family:"Klee One","Zen Maru Gothic",serif;font-weight:600;font-size:23px;line-height:1.85;letter-spacing:.06em;color:var(--ink);text-wrap:balance;word-break:auto-phrase;
+.today-w{margin:0;font-family:"Klee One","Zen Maru Gothic",serif;font-weight:600;font-size:23px;line-height:1.85;letter-spacing:.06em;color:var(--ink);
   animation:todayIn 1.4s ease .3s both}
 .today-h{margin:18px 0 0;display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;color:var(--sub);letter-spacing:.14em}
 .today-line{width:18px;height:1px;background:currentColor;opacity:.6}
 .today-d{letter-spacing:.04em}
+.today-w .tl{display:block;white-space:nowrap}
 @keyframes todayIn{from{opacity:0;transform:translateY(6px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
 @media (prefers-reduced-motion: reduce){.today-w{animation:none}}
 .extras{margin:16px 0 0;display:grid;gap:10px}
@@ -1230,13 +1231,23 @@ textarea::placeholder{color:var(--roomSub)}
     '休みの日は、思いきり自分を育てよう。',
     '今日も、いってらっしゃい。'
   ];
-  /* ---------- 今日のひとこと：日付で決まる言葉を、表に1つだけ ---------- */
+  /* ---------- 今日のひとこと：日付で決まる言葉を、意味のまとまりで改行して1つだけ ---------- */
+  const TODAY_LINES = window.__TL = [["半歩前を歩く", "先に行きすぎず", "手を引きすぎず"], ["大切にするのは", "お店様ではなく", "お客様"], ["断るのは", "お店ではない", "選ぶのはお客様"], ["「お決まりですか？」より", "「お悩みですか？」"], ["笑顔は", "咲かせるものではなく", "うつるもの"], ["お客様の思い出に", "シャッターを切る瞬間を"], ["料理を運ぶ人は", "作り手の想いを運ぶ人"], ["答えを渡すより", "良い問いを渡そう"], ["人が育てば、店が育つ", "店が育てば、街が育つ"], ["期待に応えるのは当たり前", "その少し先へ"], ["おかわりは", "頼まれる前に", "用意しておく"], ["耳は", "ひとつの卓だけでなく", "店じゅうに"], ["仕事の中に", "遊びをひとつ"], ["あえて残した不自由が", "人のぬくもりになる"], ["「すみません」と", "呼ばせない店でいよう"], ["挨拶は", "すべての始まり"], ["枝の長さが違うように", "伸びる速さも", "人それぞれ"], ["色の違う実があるから", "木は豊かになる"], ["縁は、円", "めぐって、また戻ってくる"], ["飲食店は", "人が育つ寺子屋になれる"], ["見送りまでが", "おもてなし"], ["事実を伝え", "期待を込めて伝える"], ["名前を覚えるのは", "記憶力ではなく関心"], ["忙しい時ほど", "目の前の一人に"], ["良い店は", "良いチームの背中で", "できている"], ["背中で見せ", "言葉で支える"], ["ありがとうは", "言われる前に言う"], ["今日の一杯が", "誰かの明日の元気になる"], ["迷ったら", "お客様が笑う方へ"], ["育てるとは", "待つこと"], ["今日も、お店に立つ", "あなたがいてよかった"], ["うまくいかない日も", "ちゃんと育っている"], ["その「いらっしゃいませ」に", "救われた人がいる"], ["焦らなくていい", "根っこは、見えないところで", "伸びている"], ["失敗は", "上手くなる途中の景色"], ["疲れた日は", "ちゃんと休むのも仕事"], ["あなたの笑顔を", "覚えている人が", "きっといる"], ["昨日の自分より、半歩前へ", "それで十分"], ["誰かと比べなくていい", "あなたの枝の", "伸び方でいい"], ["今日の一杯も", "きっと誰かの思い出になる"], ["がんばっているのは", "ちゃんと伝わっている"], ["わからないことは", "聞いていい"], ["落ち込んだ分だけ", "人にやさしくなれる"], ["ひとつできたら", "それを自分で褒めよう"], ["忙しい日を乗り切った", "あなたは、すごい"], ["完璧じゃなくていい", "あなたらしくていい"], ["今日もらった", "「ありがとう」を", "ひとつ思い出そう"], ["小さな気づきが", "大きな信頼になる"], ["向いていないと思う日ほど", "伸びている"], ["あなたが来ると", "お店が明るくなる"], ["うまく言えなくても", "気持ちは伝わる"], ["注意された日は", "期待されている日"], ["深呼吸ひとつで", "また笑顔に戻れる"], ["今日もおつかれさま", "よくがんばりました"], ["迷ったら", "立ち止まっていい"], ["誰かの「また来るね」は", "あなたへの言葉"], ["成長は", "あとから振り返って", "気づくもの"], ["ひとりで抱えなくていい", "チームがいる"], ["今日のあなたに", "花丸を"], ["楽しいと思える瞬間を", "ひとつ見つけよう"], ["ゆっくりでいい", "止まらなければ", "木は育つ"], ["あなたの一言で", "誰かの一日が変わる"], ["できなかったことより", "できたことを数えよう"], ["自分を大切にできる人は", "お客様も大切にできる"], ["今日がしんどくても", "明日はまた来る"], ["その気づかい", "ちゃんと届いています"], ["新しい一歩は", "いつも少しこわい", "だから価値がある"], ["あなたの成長を", "楽しみにしている人がいる"], ["休みの日は", "思いきり自分を育てよう"], ["今日も", "いってらっしゃい"]];
+  const todayFit = window.__todayFit = function(){
+    const el = $('todayW'); if (!el || !el.firstChild) return;
+    el.style.fontSize = '';
+    const max = el.clientWidth; let fs = parseFloat(getComputedStyle(el).fontSize);
+    const widest = () => Math.max(...[...el.children].map(c => c.scrollWidth));
+    while (widest() > max && fs > 16){ fs -= 1; el.style.fontSize = fs + 'px'; }
+  };
   (function(){
     const d = new Date(), day = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
-    const w = WORDS[((day % WORDS.length) + WORDS.length) % WORDS.length];
+    const lines = TODAY_LINES[((day % TODAY_LINES.length) + TODAY_LINES.length) % TODAY_LINES.length];
     const el = $('todayW'); el.textContent = '';
-    w.split('／').forEach((part, i) => { if (i) el.appendChild(document.createElement('br')); el.appendChild(document.createTextNode(part)); });
+    lines.forEach(t => { const sp = document.createElement('span'); sp.className = 'tl'; sp.textContent = t; el.appendChild(sp); });
     $('todayD').textContent = `${d.getMonth() + 1}/${d.getDate()}`;
+    todayFit(); window.addEventListener('resize', todayFit);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(todayFit);
   })();
 
   async function tryPass(){
