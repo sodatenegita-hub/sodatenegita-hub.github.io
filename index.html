@@ -19,7 +19,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Klee+One:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#FFFFFF; --ink:#2E2A26; --sub:#7A716A; --line:#ECE6DF;
@@ -156,10 +156,17 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .sec-h{margin:40px 0 2px;font-size:19px;font-weight:700;line-height:1.5}
 .sec-h.sec-gap{margin-top:52px}
 .sec-s{margin:0;font-size:13px;color:var(--sub);line-height:1.7}
-.today{margin:18px 0 6px;padding:16px 18px 18px;border-radius:18px;background:rgba(247,148,29,.08);position:relative}
-.today-h{margin:0 0 6px;font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.12em;display:flex;justify-content:space-between;align-items:baseline}
-.today-d{font-weight:500;color:var(--sub);letter-spacing:0}
-.today-w{margin:0;font-size:18px;font-weight:700;line-height:1.7;color:var(--ink);text-wrap:balance;word-break:auto-phrase}
+.today{position:relative;margin:30px 0 14px;padding:34px 10px 8px;text-align:center}
+.today::before,.today::after{content:"";position:absolute;left:50%;width:44px;height:1px;background:var(--orange);opacity:.55;transform:translateX(-50%)}
+.today::before{top:0}.today::after{bottom:-6px;display:none}
+.today-q{position:absolute;left:50%;top:-2px;transform:translateX(-50%);font-family:Georgia,"Times New Roman",serif;font-size:76px;line-height:1;color:var(--orange);opacity:.22;pointer-events:none}
+.today-w{margin:0;font-family:"Klee One","Zen Maru Gothic",serif;font-weight:600;font-size:23px;line-height:1.85;letter-spacing:.06em;color:var(--ink);text-wrap:balance;word-break:auto-phrase;
+  animation:todayIn 1.4s ease .3s both}
+.today-h{margin:18px 0 0;display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;color:var(--sub);letter-spacing:.14em}
+.today-line{width:18px;height:1px;background:currentColor;opacity:.6}
+.today-d{letter-spacing:.04em}
+@keyframes todayIn{from{opacity:0;transform:translateY(6px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion: reduce){.today-w{animation:none}}
 .extras{margin:16px 0 0;display:grid;gap:10px}
 
 .tip .new{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--orange);color:#2A1A0C;font-size:11px;font-weight:700;vertical-align:middle;letter-spacing:.05em}
@@ -509,10 +516,11 @@ textarea::placeholder{color:var(--roomSub)}
     <p class="lead" data-i18n="lead">お店に立ちながら開ける、接客の道具箱。</p>
   </section>
 
-  <section class="today" id="today" aria-label="今日のひとこと">
-    <p class="today-h"><span data-i18n="todayH">今日のひとこと</span><span class="today-d" id="todayD"></span></p>
-    <p class="today-w" id="todayW" lang="ja"></p>
-  </section>
+  <figure class="today" id="today" aria-label="今日のひとこと">
+    <span class="today-q" aria-hidden="true">“</span>
+    <blockquote class="today-w" id="todayW" lang="ja"></blockquote>
+    <figcaption class="today-h"><span class="today-line" aria-hidden="true"></span><span data-i18n="todayH">今日のひとこと</span><span class="today-d" id="todayD"></span></figcaption>
+  </figure>
   <button class="letter" id="letter" type="button" hidden><i></i><span id="letterText" data-i18n="letter">新しい一言が届いています</span></button>
   <p class="letter-body" id="letterBody" hidden></p>
   <h2 class="sec-h" data-i18n="sec1">すぐ使える道具</h2>
