@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-10-jiten-lock">
+<meta name="engawa-version" content="2026-10-14-rinten">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -478,6 +478,83 @@ textarea::placeholder{color:var(--roomSub)}
 .okt-sum{border-radius:12px;padding:12px 14px;background:rgba(247,148,29,.08);margin:12px 0;font-size:14px;line-height:1.8}
 .okt-sum b{font-size:18px}
 .okt-imp{margin-top:18px;font-size:13px}
+/* 臨店チェック */
+.rt-guide{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;line-height:1.6;padding:10px 12px;border-radius:12px;background:rgba(247,148,29,.08);margin:4px 0 12px}
+.rt-guide b{width:100%;font-size:12px}
+.rt-guide em{width:100%;font-style:normal;opacity:.65;font-size:11px}
+.rt-prog{position:sticky;top:0;z-index:2;background:var(--paper);padding:8px 0;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px}
+.rt-prog i{flex:1;height:6px;border-radius:3px;background:rgba(128,128,128,.2);position:relative;overflow:hidden}
+.rt-prog i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:#F7941D;border-radius:3px;transition:width .3s}
+.rt-cat{margin:6px 0 2px;border-top:1px solid rgba(128,128,128,.25)}
+.rt-cat>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 0;font-weight:700;font-size:15px}
+.rt-cat>summary::-webkit-details-marker{display:none}
+.rt-cat>summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;opacity:.6;margin:0 4px}
+.rt-cat[open]>summary::before{transform:rotate(45deg)}
+.rt-cat>summary span{margin-left:auto;font-size:12px;font-weight:700;opacity:.7}
+.rt-cat>summary span.done{color:#39B54A;opacity:1}
+.rt-it{padding:10px 0 12px;border-top:1px dashed rgba(128,128,128,.22)}
+.rt-q{font-size:15px;line-height:1.55;margin:0 0 8px}
+.rt-q small{display:block;font-size:12px;opacity:.6;margin-top:2px}
+.rt-sc{display:flex;gap:6px;align-items:center}
+.rt-sc button{flex:1;max-width:52px;height:40px;border-radius:10px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;font-weight:700;font-size:16px;cursor:pointer;padding:0}
+.rt-sc button.on{color:#fff;border-color:transparent}
+.rt-sc button.on[data-v="5"]{background:#39B54A}.rt-sc button.on[data-v="4"]{background:#8DB86B}.rt-sc button.on[data-v="3"]{background:#F2B84E}.rt-sc button.on[data-v="2"]{background:#F7941D}.rt-sc button.on[data-v="1"]{background:#F1592A}
+.rt-sc .rt-tool{flex:none;width:40px;max-width:none;font-size:17px;border-style:dashed}
+.rt-sc .rt-tool.has{border-style:solid;border-color:#F7941D}
+.rt-memo{display:block;width:100%;box-sizing:border-box;margin-top:8px;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;resize:vertical}
+.rt-memo[hidden]{display:none}
+.rt-ph{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.rt-ph:empty{display:none}
+.rt-ph figure{position:relative;margin:0;width:84px;height:84px;border-radius:10px;overflow:hidden;background:rgba(128,128,128,.15)}
+.rt-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.rt-ph button{position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px;line-height:24px;padding:0;cursor:pointer}
+.rt-h{font-size:15px;margin:22px 0 6px}
+.rt-act{margin-top:10px}
+#rtPrint{display:none}
+@media print{
+  @page{size:A4;margin:12mm 12mm 14mm}
+  html,body{background:#fff!important;padding:0!important}
+  body.rt-printing>*:not(#rtPrint){display:none!important}
+  body.rt-printing #rtPrint{display:block!important}
+}
+#rtPrint{color:#2E2A26;font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Meiryo",sans-serif;line-height:1.6;font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#rtPrint .rp-top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #F7941D;padding-bottom:8px}
+#rtPrint .rp-top h1{font-size:20pt;margin:0;line-height:1.2}
+#rtPrint .rp-top h1 small{display:block;font-size:10pt;color:#7A716A;font-weight:500;margin-bottom:2px}
+#rtPrint .rp-brand{font-weight:700;letter-spacing:.12em;color:#F7941D;font-size:11pt}
+#rtPrint .rp-meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:9.5pt;color:#5A524B;margin:8px 0 12px}
+#rtPrint .rp-meta b{color:#2E2A26}
+#rtPrint .rp-sum{display:flex;gap:14px;align-items:stretch;margin-bottom:12px;break-inside:avoid}
+#rtPrint .rp-total{flex:none;width:150px;border-radius:12px;background:#FFF4E6;text-align:center;padding:12px 8px}
+#rtPrint .rp-total p{margin:0;font-size:9pt;color:#7A716A}
+#rtPrint .rp-total strong{display:block;font-size:30pt;line-height:1.1;color:#F7941D}
+#rtPrint .rp-total strong small{font-size:12pt;color:#7A716A}
+#rtPrint .rp-bars{flex:1;display:grid;gap:5px;align-content:center}
+#rtPrint .rp-bar{display:grid;grid-template-columns:10em 1fr 3em;gap:8px;align-items:center;font-size:9.5pt}
+#rtPrint .rp-bar i{height:10px;border-radius:5px;background:#EFE9E2;position:relative;overflow:hidden}
+#rtPrint .rp-bar i b{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+#rtPrint .rp-bar em{font-style:normal;font-weight:700;text-align:right}
+#rtPrint h2{font-size:12pt;margin:14px 0 6px;padding-left:8px;border-left:4px solid #F7941D;break-after:avoid}
+#rtPrint h2.g{border-color:#39B54A}
+#rtPrint h2.pb{break-before:page}
+#rtPrint .rp-box{border-radius:10px;background:#FAF7F3;padding:8px 12px;white-space:pre-wrap;break-inside:avoid}
+#rtPrint ul.rp-pts{margin:0;padding:0;list-style:none}
+#rtPrint ul.rp-pts li{padding:5px 0;border-bottom:1px dotted #DDD5CC;break-inside:avoid}
+#rtPrint ul.rp-pts li span.s{display:inline-block;min-width:1.8em;text-align:center;font-weight:700;color:#fff;border-radius:6px;margin-right:6px;font-size:9pt}
+#rtPrint ul.rp-pts li small{color:#7A716A;margin-right:4px}
+#rtPrint ul.rp-pts li p{margin:2px 0 0 2.6em;color:#4A4239;font-size:9.5pt}
+#rtPrint table{width:100%;border-collapse:collapse;font-size:9pt}
+#rtPrint th,#rtPrint td{border-bottom:1px solid #ECE6DF;padding:4px 6px;text-align:left;vertical-align:top}
+#rtPrint th.c{background:#FFF4E6;font-size:9.5pt}
+#rtPrint td.v{width:3em;text-align:center;font-weight:700}
+#rtPrint td.m{color:#5A524B;width:38%}
+#rtPrint tr{break-inside:avoid}
+#rtPrint .rp-phs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#rtPrint .rp-phs figure{margin:0;break-inside:avoid}
+#rtPrint .rp-phs img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block}
+#rtPrint .rp-phs figcaption{font-size:8.5pt;color:#5A524B;margin-top:2px;line-height:1.4}
+#rtPrint .rp-foot{margin-top:16px;text-align:center;font-size:8.5pt;color:#9A9089}
+.okt-btns button[data-t="rinten"]{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -576,6 +653,7 @@ textarea::placeholder{color:var(--roomSub)}
           <button type="button" data-t="jiten">困った瞬間の<br>ひとこと辞典</button>
           <button type="button" data-t="ippo">今日の1点<br><small>30秒の振り返り</small></button>
           <button type="button" data-t="recipe">レシピと<br>原価</button>
+          <button type="button" data-t="rinten">臨店チェック<br><small>点数・メモ・写真をPDFに</small></button>
         </div>
         <div class="okt-p" id="okt-drill" hidden>
           <p class="okt-s">場面を読んで、どっちで声をかけるか選びます。朝礼では「朝礼で」に切り替えて、みんなで考えてから答えを開いてください。</p>
@@ -616,6 +694,32 @@ textarea::placeholder{color:var(--roomSub)}
             <textarea id="rcImp" rows="3" placeholder="届いた文字をここに貼る"></textarea>
             <button type="button" class="okt-sub" id="rcImpGo">入れる</button>
           </details>
+        </div>
+        <div class="okt-p" id="okt-rinten" hidden>
+          <p class="okt-s">点をつけて、気づいたことと写真を添えると、そのままPDFにできます。記録はこのツールには残りません。PDFで保存してください。</p>
+          <div class="dr-mode" role="group" aria-label="使い方"><button type="button" id="rtModeV" class="on">臨店</button><button type="button" id="rtModeS">自店チェック</button></div>
+          <div class="okt-row">
+            <label class="okt-l">店舗<input id="rtShop" type="text" maxlength="40" placeholder="例：A店" autocomplete="off"></label>
+            <label class="okt-l">日付<input id="rtDate" type="date"></label>
+          </div>
+          <div class="okt-row">
+            <label class="okt-l">時間帯<input id="rtTime" type="text" maxlength="30" placeholder="例：18時〜20時" autocomplete="off"></label>
+            <label class="okt-l"><span id="rtWhoL">チェックした人</span><input id="rtWho" type="text" maxlength="30" autocomplete="off"></label>
+          </div>
+          <label class="okt-l" id="rtWithW">立ち会った人（店長など）<input id="rtWith" type="text" maxlength="30" autocomplete="off"></label>
+          <div class="rt-guide"><b>点のつけ方</b><span>5 お手本になる</span><span>4 できている</span><span>3 ふつう</span><span>2 もう少し</span><span>1 できていない</span><em>もう一度押すと外せます（見られなかった項目は空欄のまま）</em></div>
+          <div class="rt-prog" id="rtProg"></div>
+          <div id="rtList"></div>
+          <h4 class="rt-h">全体の写真</h4>
+          <div class="rt-ph" id="rtPhAll"></div>
+          <button type="button" class="okt-sub rt-cam" data-ph="all">📷 写真を足す</button>
+          <h4 class="rt-h">まとめ</h4>
+          <label class="okt-l">いちばん良かったこと<textarea id="rtGood" rows="3" maxlength="600"></textarea></label>
+          <label class="okt-l">次までに取り組むこと<textarea id="rtNext" rows="3" maxlength="600" placeholder="点の低い項目から3つまで、自動で候補を入れられます"></textarea></label>
+          <button type="button" class="okt-sub" id="rtSuggest">点の低い項目から候補を入れる</button>
+          <div class="okt-row rt-act"><button type="button" class="okt-go" id="rtPdf">PDFで保存</button><button type="button" class="okt-sub" id="rtReset">はじめから</button></div>
+          <p class="okt-msg" id="rtMsg"></p>
+          <input type="file" id="rtFile" accept="image/*" multiple hidden>
         </div>
       </div>
     </div>
@@ -2316,7 +2420,7 @@ textarea::placeholder{color:var(--roomSub)}
   btns.forEach(function(b){b.addEventListener('click',function(){
     var t=b.dataset.t, open=!b.classList.contains('on');
     btns.forEach(function(x){x.classList.remove('on');});
-    ['jiten','ippo','recipe'].forEach(function(k){$('okt-'+k).hidden=true;});
+    ['drill','jiten','ippo','recipe','rinten'].forEach(function(k){$('okt-'+k).hidden=true;});
     if(open){b.classList.add('on');$('okt-'+t).hidden=false;if(t==='ippo')ipRender();if(t==='recipe')rcRender();}
   });});
 
@@ -2420,6 +2524,159 @@ textarea::placeholder{color:var(--roomSub)}
     var done=function(){$('rcMsg').textContent='送る文字をコピーしました。仲間にだけ送ってください（仕入れ値も入っています）。';};
     if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done,function(){prompt('この文字をコピーして送ってください',txt);});else prompt('この文字をコピーして送ってください',txt);});
   $('rcImpGo').addEventListener('click',function(){var t=$('rcImp').value.trim();try{var r=JSON.parse(decodeURIComponent(escape(atob(t.replace(/^SODATEレシピ:/,'')))));r.id=Date.now().toString(36);var list=store.get(RCK,[]);list.unshift(r);store.set(RCK,list);$('rcImp').value='';rcRender();openEdit(r);$('rcMsg').textContent='届いたレシピを入れました。';}catch(e){alert('読み取れませんでした。届いた文字をそのまま貼ってください。');}});
+})();
+</script>
+<script>
+// ---- 臨店チェック（点・メモ・写真 → PDF。記録は残さない） ----
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  if(!$('okt-rinten'))return;
+  var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var CATS=[
+    ['入店〜ご案内',[
+      ['入店から3秒以内に、声と目線でお迎えしている',''],
+      ['笑顔と声のトーンが、店の空気をつくっている',''],
+      ['人数・予約の確認がスムーズで、待たせていない',''],
+      ['席までの案内で、ひとこと添えている','例：足元・荷物・寒さへの気づかい'],
+      ['混んでいるときも、待っているお客様に声をかけている','']]],
+    ['注文〜提供',[
+      ['おしぼり・最初のドリンクまでが早い','目安：着席から3分'],
+      ['おすすめを、自分の言葉で伝えている',''],
+      ['注文の復唱・確認が正確',''],
+      ['料理を出すとき、料理名とひとことを添えている',''],
+      ['提供が遅れそうなとき、先に声をかけている',''],
+      ['空いたグラス・お皿に気づいて声をかけている','']]],
+    ['お見送り',[
+      ['お会計がスムーズで、待たせていない',''],
+      ['「ありがとうございました」に気持ちと目線がある',''],
+      ['出口までお見送りし、また来たくなるひとことがある',''],
+      ['忘れ物・天気など、帰り道への気配りがある','']]],
+    ['身だしなみ',[
+      ['制服・エプロンが清潔で、シワや汚れがない',''],
+      ['髪・爪・手元が清潔',''],
+      ['名札・靴まで、お店のルールに合っている',''],
+      ['表情と姿勢（腕組み・もたれかかりがない）','']]],
+    ['店内の環境',[
+      ['入口・看板・外まわりがきれい','お客様が最初に見る場所'],
+      ['テーブル・椅子・床に汚れやガタつきがない',''],
+      ['トイレが清潔で、備品が切れていない',''],
+      ['照明・音楽・空調がちょうどいい',''],
+      ['厨房・バックヤードが整理整頓されている','']]],
+    ['チームワーク',[
+      ['スタッフ同士の声かけ（報告・連絡・相談）がある',''],
+      ['手が空いたら、自分から動いている',''],
+      ['お客様の前で、私語・ため息・注意がない',''],
+      ['新人やフォローが必要な人を、まわりが支えている','']]],
+    ['数字につながる提案',[
+      ['2杯目・追加注文のタイミングで声をかけている',''],
+      ['おすすめ・季節のメニューを提案できている',''],
+      ['次の予約・口コミなど、また来るきっかけをつくっている',''],
+      ['お客様の反応を、店長やチームに伝えている','']]]
+  ];
+  var CAT_COL=['#F7941D','#E8862A','#F2B84E','#8DB86B','#6FA8C9','#39B54A','#F1592A'];
+  var SC_COL={5:'#39B54A',4:'#8DB86B',3:'#F2B84E',2:'#F7941D',1:'#F1592A'};
+  var items=[];CATS.forEach(function(c,ci){c[1].forEach(function(q,qi){items.push({id:ci+'-'+qi,ci:ci,q:q[0],h:q[1]});});});
+  var st, mode='v', phTarget=null;
+  function blank(){st={sc:{},memo:{},ph:{all:[]}};}
+  blank();
+  function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+  $('rtDate').value=today();
+  function dirty(){return Object.keys(st.sc).length||Object.keys(st.memo).some(function(k){return st.memo[k];})||Object.keys(st.ph).some(function(k){return st.ph[k].length;});}
+  addEventListener('beforeunload',function(e){if(dirty()){e.preventDefault();e.returnValue='';}});
+  function setMode(m){mode=m;$('rtModeV').classList.toggle('on',m==='v');$('rtModeS').classList.toggle('on',m==='s');$('rtWithW').hidden=m!=='v';$('rtWhoL').textContent=m==='v'?'チェックした人':'チェックした人（店長など）';}
+  $('rtModeV').addEventListener('click',function(){setMode('v');});
+  $('rtModeS').addEventListener('click',function(){setMode('s');});
+  function render(){
+    $('rtList').innerHTML=CATS.map(function(c,ci){
+      var its=items.filter(function(x){return x.ci===ci;});
+      return '<details class="rt-cat"'+(ci===0?' open':'')+' data-ci="'+ci+'"><summary>'+esc(c[0])+'<span data-cn="'+ci+'"></span></summary>'+its.map(function(x){
+        return '<div class="rt-it" data-id="'+x.id+'"><p class="rt-q">'+esc(x.q)+(x.h?'<small>'+esc(x.h)+'</small>':'')+'</p><div class="rt-sc">'+[1,2,3,4,5].map(function(v){return '<button type="button" data-v="'+v+'" aria-label="'+v+'点">'+v+'</button>';}).join('')+'<button type="button" class="rt-tool" data-memo aria-label="メモ">✎</button><button type="button" class="rt-tool rt-cam" data-ph="'+x.id+'" aria-label="写真">📷</button></div><textarea class="rt-memo" rows="2" maxlength="400" placeholder="気づいたこと" hidden></textarea><div class="rt-ph" data-phbox="'+x.id+'"></div></div>';
+      }).join('')+'</details>';
+    }).join('');
+    sync();
+  }
+  function sync(){
+    var n=Object.keys(st.sc).length;
+    $('rtProg').innerHTML=n+' / '+items.length+' つけた<i style="--p:'+(n/items.length*100)+'%"></i>';
+    CATS.forEach(function(c,ci){var its=items.filter(function(x){return x.ci===ci;}),k=its.filter(function(x){return st.sc[x.id];}).length,el=document.querySelector('[data-cn="'+ci+'"]');if(el){el.textContent=k+' / '+its.length;el.classList.toggle('done',k===its.length);}});
+  }
+  function drawPh(key){
+    var box=key==='all'?$('rtPhAll'):document.querySelector('[data-phbox="'+key+'"]');if(!box)return;
+    box.innerHTML=(st.ph[key]||[]).map(function(p,i){return '<figure><img src="'+p+'" alt=""><button type="button" data-rm="'+key+'|'+i+'" aria-label="消す">×</button></figure>';}).join('');
+    var cam=document.querySelector('.rt-cam[data-ph="'+key+'"]');if(cam&&key!=='all')cam.classList.toggle('has',!!(st.ph[key]||[]).length);
+  }
+  $('okt-rinten').addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    var it=b.closest('.rt-it');
+    if(b.dataset.v&&it){var id=it.dataset.id,v=+b.dataset.v;if(st.sc[id]===v)delete st.sc[id];else st.sc[id]=v;it.querySelectorAll('[data-v]').forEach(function(x){x.classList.toggle('on',+x.dataset.v===st.sc[id]);});sync();return;}
+    if(b.hasAttribute('data-memo')&&it){var ta=it.querySelector('.rt-memo');ta.hidden=!ta.hidden;if(!ta.hidden)ta.focus();return;}
+    if(b.dataset.ph){phTarget=b.dataset.ph;$('rtFile').value='';$('rtFile').click();return;}
+    if(b.dataset.rm){var p=b.dataset.rm.split('|');st.ph[p[0]].splice(+p[1],1);drawPh(p[0]);return;}
+  });
+  $('okt-rinten').addEventListener('input',function(e){
+    if(e.target.classList.contains('rt-memo')){var id=e.target.closest('.rt-it').dataset.id;st.memo[id]=e.target.value;var m=e.target.closest('.rt-it').querySelector('[data-memo]');m.classList.toggle('has',!!e.target.value.trim());}
+  });
+  function shrink(file){return new Promise(function(ok){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var M=1400,s=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.8));};im.onerror=function(){ok(null);};im.src=r.result;};r.onerror=function(){ok(null);};r.readAsDataURL(file);});}
+  $('rtFile').addEventListener('change',async function(){
+    var key=phTarget;if(!key)return;st.ph[key]=st.ph[key]||[];
+    var fs=[].slice.call(this.files||[]),max=key==='all'?9:3;
+    for(var i=0;i<fs.length&&st.ph[key].length<max;i++){var d=await shrink(fs[i]);if(d)st.ph[key].push(d);}
+    if(fs.length&&st.ph[key].length>=max)$('rtMsg').textContent=(key==='all'?'全体の写真は9枚':'1項目に3枚')+'までです。';else $('rtMsg').textContent='';
+    drawPh(key);
+  });
+  function low(){return items.filter(function(x){return st.sc[x.id];}).sort(function(a,b){return st.sc[a.id]-st.sc[b.id]||a.ci-b.ci;});}
+  $('rtSuggest').addEventListener('click',function(){
+    var l=low().filter(function(x){return st.sc[x.id]<=3;}).slice(0,3);
+    if(!l.length){$('rtMsg').textContent='3点以下の項目はまだありません。';return;}
+    var t=l.map(function(x,i){return (i+1)+'. '+x.q;}).join('\n');
+    $('rtNext').value=$('rtNext').value.trim()?$('rtNext').value.trim()+'\n'+t:t;$('rtMsg').textContent='';
+  });
+  $('rtReset').addEventListener('click',function(){if(dirty()&&!confirm('点・メモ・写真をすべて消して、はじめからにしますか？'))return;blank();$('rtGood').value='';$('rtNext').value='';$('rtMsg').textContent='';render();drawPh('all');});
+  function avg(a){return a.length?a.reduce(function(s,v){return s+v;},0)/a.length:null;}
+  function f1(v){return v==null?'—':v.toFixed(1);}
+  function report(){
+    var scored=items.filter(function(x){return st.sc[x.id];});
+    var all=avg(scored.map(function(x){return st.sc[x.id];}));
+    var title=mode==='v'?'臨店チェック':'自店チェック';
+    var shop=$('rtShop').value.trim()||'（店舗名なし）',date=$('rtDate').value||today();
+    var dp=date.split('-'),dj=dp.length===3?(+dp[0])+'年'+(+dp[1])+'月'+(+dp[2])+'日':date;
+    var meta=[['日付',dj],['時間帯',$('rtTime').value.trim()],['チェックした人',$('rtWho').value.trim()]];
+    if(mode==='v')meta.push(['立ち会った人',$('rtWith').value.trim()]);
+    meta.push(['つけた項目',scored.length+' / '+items.length]);
+    var bars=CATS.map(function(c,ci){var a=avg(items.filter(function(x){return x.ci===ci&&st.sc[x.id];}).map(function(x){return st.sc[x.id];}));return '<div class="rp-bar"><span>'+esc(c[0])+'</span><i>'+(a!=null?'<b style="width:'+(a/5*100)+'%;background:'+CAT_COL[ci]+'"></b>':'')+'</i><em>'+f1(a)+'</em></div>';}).join('');
+    function pt(x){var v=st.sc[x.id],m=(st.memo[x.id]||'').trim();return '<li><span class="s" style="background:'+SC_COL[v]+'">'+v+'</span><small>'+esc(CATS[x.ci][0])+'</small>'+esc(x.q)+(m?'<p>'+esc(m)+'</p>':'')+'</li>';}
+    var good=scored.filter(function(x){return st.sc[x.id]===5||(st.sc[x.id]===4&&(st.memo[x.id]||'').trim());}).sort(function(a,b){return st.sc[b.id]-st.sc[a.id]||a.ci-b.ci;});
+    var bad=low().filter(function(x){return st.sc[x.id]<=2||(st.sc[x.id]===3&&(st.memo[x.id]||'').trim());});
+    var h='<div class="rp-top"><h1><small>'+esc(shop)+'</small>'+title+'の報告</h1><span class="rp-brand">SODATE</span></div>';
+    h+='<div class="rp-meta">'+meta.filter(function(m){return m[1];}).map(function(m){return '<span>'+m[0]+'：<b>'+esc(m[1])+'</b></span>';}).join('')+'</div>';
+    h+='<div class="rp-sum"><div class="rp-total"><p>平均の点</p><strong>'+f1(all)+'<small> / 5</small></strong><p>'+(all!=null?'100点にすると '+Math.round(all/5*100)+'点':'まだ点がありません')+'</p></div><div class="rp-bars">'+bars+'</div></div>';
+    var g=$('rtGood').value.trim(),n=$('rtNext').value.trim();
+    if(g)h+='<h2 class="g">いちばん良かったこと</h2><div class="rp-box">'+esc(g)+'</div>';
+    if(n)h+='<h2>次までに取り組むこと</h2><div class="rp-box">'+esc(n)+'</div>';
+    if(good.length)h+='<h2 class="g">良かったところ</h2><ul class="rp-pts">'+good.map(pt).join('')+'</ul>';
+    if(bad.length)h+='<h2>伸ばしたいところ（点の低い順）</h2><ul class="rp-pts">'+bad.map(pt).join('')+'</ul>';
+    h+='<h2 class="pb">すべての項目</h2><table>'+CATS.map(function(c,ci){return '<tr><th class="c" colspan="3">'+esc(c[0])+'</th></tr>'+items.filter(function(x){return x.ci===ci;}).map(function(x){var v=st.sc[x.id];return '<tr><td>'+esc(x.q)+'</td><td class="v"'+(v?' style="color:'+(v===3?'#C98A12':SC_COL[v])+'"':'')+'>'+(v||'—')+'</td><td class="m">'+esc(st.memo[x.id]||'')+'</td></tr>';}).join('');}).join('')+'</table>';
+    var phs=[];items.forEach(function(x){(st.ph[x.id]||[]).forEach(function(p){phs.push([p,CATS[x.ci][0]+'｜'+x.q]);});});(st.ph.all||[]).forEach(function(p){phs.push([p,'全体']);});
+    if(phs.length)h+='<h2>写真</h2><div class="rp-phs">'+phs.map(function(p){return '<figure><img src="'+p[0]+'" alt=""><figcaption>'+esc(p[1])+'</figcaption></figure>';}).join('')+'</div>';
+    h+='<p class="rp-foot">SODATE ｜ 木は、縁に囲まれて育つ。</p>';
+    return {html:h,name:title+'_'+(($('rtShop').value.trim())||'店舗')+'_'+date};
+  }
+  window.__rtReport=report;
+  $('rtPdf').addEventListener('click',function(){
+    if(!Object.keys(st.sc).length){$('rtMsg').textContent='まだ1つも点がついていません。';return;}
+    var r=report(),box=$('rtPrint');
+    if(!box){box=document.createElement('div');box.id='rtPrint';document.body.appendChild(box);}
+    box.innerHTML=r.html;
+    var t0=document.title;document.title=r.name;document.body.classList.add('rt-printing');
+    var imgs=[].slice.call(box.querySelectorAll('img'));
+    Promise.all(imgs.map(function(im){return im.complete?0:new Promise(function(ok){im.onload=im.onerror=ok;});})).then(function(){
+      var done=function(){document.body.classList.remove('rt-printing');document.title=t0;removeEventListener('afterprint',done);};
+      addEventListener('afterprint',done);
+      setTimeout(function(){document.title=r.name;window.print();},60);
+    });
+    $('rtMsg').textContent='印刷の画面で「PDFとして保存」を選んでください（iPhoneは共有→プリント→右上の共有→「ファイルに保存」）。';
+  });
+  setMode('v');render();
 })();
 </script>
 </body>
