@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-17-dougubako">
+<meta name="engawa-version" content="2026-10-25-catchcopy">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -80,6 +80,12 @@ button{font:inherit}
 .ripple{fill:none;stroke:var(--d1);stroke-width:2;transform-box:fill-box;transform-origin:center;pointer-events:none}
 h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:700}
 .lead{color:var(--sub);margin:0;font-size:15px}
+/* キャッチコピー：句読点なしの2行。目で見た中央にそろえる（1行目は約0.5%右、2行目は約0.8%左） */
+.catch{margin:30px auto 4px;color:var(--ink);font-weight:500;
+  font-size:clamp(16px,4.6vw,19px);line-height:1.9;letter-spacing:.06em}
+.catch span{display:block;white-space:nowrap}
+.catch .c1{transform:translateX(.5%)}
+.catch .c2{transform:translateX(-.8%)}
 .tips{list-style:none;margin:44px 0 0;padding:0}
 .lock{display:inline-block;width:14px;height:12px;margin-right:8px;border:2px solid var(--orange);border-radius:3px;position:relative;vertical-align:-1px}
 .lock::before{content:"";position:absolute;left:1px;top:-9px;width:8px;height:8px;border:2px solid var(--orange);border-bottom:0;border-radius:6px 6px 0 0}
@@ -597,6 +603,7 @@ textarea::placeholder{color:var(--roomSub)}
     </div>
     <h1 data-i18n="h1">営業中に、すぐ使える。</h1>
     <p class="lead" data-i18n="lead">お店に立ちながら開ける、接客の道具箱。</p>
+    <p class="catch" lang="ja" aria-label="あなたの中にあるものを、一緒に育てる。"><span class="c1">あなたの中にあるものを</span><span class="c2">一緒に育てる</span></p>
   </section>
 
   <figure class="today" id="today" aria-label="今日のひとこと">
