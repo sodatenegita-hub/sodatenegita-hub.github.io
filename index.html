@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-25-ogp">
+<meta name="engawa-version" content="2026-10-31-photo">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -424,7 +424,11 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .namebar[hidden]{display:none}
 .namebar p{margin:0 0 8px;font-size:14px}
 .namerow{display:flex;gap:8px}
-.namerow input{flex:1;background:var(--room);border:1px solid var(--room3);color:var(--roomInk);font:inherit;font-size:16px;padding:9px 12px;border-radius:12px}
+.namerow input{flex:1;min-width:0;background:var(--room);border:1px solid var(--room3);color:var(--roomInk);font:inherit;font-size:16px;padding:12px 12px;border-radius:12px}
+.namerow .send{flex:none;min-width:96px;min-height:48px;font-size:16px}
+.ri-ok{display:none;background:var(--orange);color:#2A1A0C;border:0;font-weight:700;font-size:16px;min-height:44px;padding:0 20px;border-radius:12px;cursor:pointer;margin:8px 0 2px}
+.ri.editing .ri-ok{display:inline-block}
+.desk-add .send{min-height:44px;padding:10px 22px}
 .empty{color:var(--roomSub);text-align:center;font-size:14px;margin:40px auto;max-width:300px}
 .compose{border-top:1px solid var(--room3);padding:10px 12px}
 .compose .inner{display:flex;gap:8px;align-items:flex-end}
@@ -433,6 +437,21 @@ textarea::placeholder{color:var(--roomSub)}
 .send{background:var(--orange);color:#2A1A0C;border:0;font-weight:700;font-size:15px;padding:10px 18px;border-radius:14px;cursor:pointer}
 .send:disabled{opacity:.4;cursor:default}
 .err{color:#F2B880;font-size:13px;text-align:center;margin:6px auto 0;max-width:640px}
+.pic{flex:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--room3);background:var(--room2);color:var(--roomSub);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.pic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.pic:disabled{opacity:.4;cursor:default}
+.msg .photo{display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:14px;overflow:hidden;line-height:0}
+.msg .photo img{display:block;width:auto;height:auto;max-width:min(240px,62vw);max-height:300px;flex:none}
+.album{position:fixed;inset:0;z-index:60;background:var(--room);display:flex;flex-direction:column}
+.album[hidden]{display:none}
+.album .grid{flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;align-content:start}
+.album .grid button{padding:0;border:0;background:var(--room2);aspect-ratio:1/1;overflow:hidden;cursor:zoom-in}
+.album .grid img{width:100%;height:100%;object-fit:cover;display:block}
+.album .grid p{grid-column:1/-1;color:var(--roomSub);text-align:center;font-size:14px;margin:40px 0}
+.viewer{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px}
+.viewer[hidden]{display:none}
+.viewer img{max-width:100%;max-height:80vh;width:auto;height:auto;flex:none}
+.viewer p{margin:0;color:#ddd;font-size:12px}
 
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;transition-delay:0s !important}
@@ -859,22 +878,29 @@ textarea::placeholder{color:var(--roomSub)}
 <section class="room" id="room" aria-label="縁側" aria-hidden="true">
   <header class="room-head">
     <div class="room-title">縁側<span class="adm" id="admBadge" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5.5" cy="8" r="3.2"/><path d="M8.6 8H15M12.5 8v2.6M14.6 8v1.8"/></svg>管理者</span><small id="roomSub">合言葉を知る人だけの相談室</small></div>
-    <div class="head-btns"><button class="back" id="toDesk" type="button" hidden>帳場</button><button class="back" id="back" type="button">戻る</button></div>
+    <div class="head-btns"><button class="back" id="albumOpen" type="button">写真</button><button class="back" id="toDesk" type="button" hidden>帳場</button><button class="back" id="back" type="button">戻る</button></div>
   </header>
   <div class="namebar" id="namebar" hidden>
     <div class="inner">
       <p>はじめに、ここで使う名前を決めてください。</p>
-      <div class="namerow"><input id="nameIn" type="text" maxlength="20" placeholder="ニックネーム" autocomplete="off" lang="ja"><button class="send" id="nameSave" type="button">決める</button></div>
+      <div class="namerow"><input id="nameIn" type="text" maxlength="20" placeholder="ニックネーム" autocomplete="off" lang="ja" enterkeyhint="done"><button class="send" id="nameSave" type="button">決める</button></div>
     </div>
   </div>
   <div class="log" id="log"><div class="inner" id="list"></div></div>
   <div class="compose">
     <div class="inner">
-      <textarea id="input" rows="1" maxlength="1000" placeholder="メッセージ" aria-label="メッセージ"></textarea>
+      <button class="pic" id="picBtn" type="button" aria-label="写真を送る"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg></button>
+      <input type="file" id="picIn" accept="image/*" hidden>
+      <textarea id="input" rows="1" maxlength="1000" placeholder="メッセージ" aria-label="メッセージ" enterkeyhint="enter"></textarea>
       <button class="send" id="send" type="button" disabled>送る</button>
     </div>
     <p class="err" id="err" role="status"></p>
   </div>
+  <div class="album" id="album" hidden>
+    <header class="room-head"><div class="room-title">アルバム<small>この部屋で送られた写真</small></div><button class="back" id="albumClose" type="button">閉じる</button></header>
+    <div class="grid" id="albumGrid"></div>
+  </div>
+  <div class="viewer" id="viewer" hidden><img id="viewerImg" alt="送られた写真"><p>長押しで保存できます。画面を押すと閉じます</p></div>
 </section>
 
 <!-- ============================================================
@@ -1251,7 +1277,7 @@ textarea::placeholder{color:var(--roomSub)}
 
   /* ---------- 3. 合言葉 → 鍵 → 部屋 ---------- */
   const te = new TextEncoder(), td = new TextDecoder();
-  const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+  const b64 = u => { const a = new Uint8Array(u); let s = ''; for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode(...a.subarray(i, i + 0x8000)); return btoa(s); };   // 写真のような大きいものも区切って変換
   const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const hex = u => [...u].map(x => x.toString(16).padStart(2,'0')).join('');
   async function derive(phrase){
@@ -1469,6 +1495,7 @@ textarea::placeholder{color:var(--roomSub)}
 
   /* ---------- 5. 縁側：暗号化されたチャット ---------- */
   const list=$('list'), log=$('log'), input=$('input'), sendBtn=$('send'), err=$('err');
+  const PHOTO = '\u0000engawa-photo\u0000', PHOTO_MAX = 360000;   // 写真の目印と、1枚の大きさの上限（文字数）
   let seq=0, firstPaint=true, readsUnsub=null, reads={}, lastItems=[], lastProfiles={}, latestAt=0, markedAt=0;
   function startChat(){
     firstPaint = true; err.textContent=''; reads = {}; lastItems = []; latestAt = 0; markedAt = 0;
@@ -1501,14 +1528,15 @@ textarea::placeholder{color:var(--roomSub)}
     $('nameSave').disabled = false;
   });
   $('nameIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) $('nameSave').click(); });
-  function stopChat(){ if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
+  function stopChat(){ $('album').hidden = true; $('viewer').hidden = true; if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
 
   async function render(docs, k){
     const my = ++seq;
     const items = await Promise.all(docs.map(async d => {
       const m = d.data() || {};
       let text = null; try { text = await open_(k.key, m.iv, m.ct); } catch {}
-      return { uid:m.uid, at:m.at, text };
+      let photo = null; if (text && text.startsWith(PHOTO)){ photo = text.slice(PHOTO.length); text = ''; }
+      return { uid:m.uid, at:m.at, text, photo };
     }));
     const ids = [...new Set(items.map(m => m.uid).filter(Boolean))];
     let ps = {}; if (user && ids.length){ try { ps = await user.profiles(ids); } catch {} }
@@ -1537,7 +1565,12 @@ textarea::placeholder{color:var(--roomSub)}
       const body=document.createElement('div'); body.className='body';
       const who=document.createElement('p'); who.className='who'; who.textContent = pr.name || 'だれか';
       const line=document.createElement('div'); line.className='line';
-      const b=document.createElement('div'); b.className='bubble'+(m.text===null?' locked':''); b.textContent = m.text ?? '（読めない言葉）';
+      let b;
+      if (m.photo && m.photo.startsWith('data:image/')){
+        b=document.createElement('button'); b.type='button'; b.className='photo'; b.setAttribute('aria-label','写真を大きく見る');
+        const im=document.createElement('img'); im.alt='送られた写真'; im.src=m.photo; im.loading='lazy'; b.appendChild(im);
+        b.addEventListener('click', () => showPhoto(m.photo));
+      } else { b=document.createElement('div'); b.className='bubble'+(m.text===null?' locked':''); b.textContent = m.text ?? '（読めない言葉）'; }
       const meta=document.createElement('div'); meta.className='meta';
       if (mine){
         const n = Object.entries(reads).filter(([u,at]) => u !== myId && at >= m.at).length;
@@ -1549,6 +1582,7 @@ textarea::placeholder{color:var(--roomSub)}
     }
     if (firstPaint || (fromMessages && near)) log.scrollTop = log.scrollHeight;
     if (fromMessages) firstPaint = false;
+    if (!$('album').hidden) drawAlbum();
   }
 
   // 読んだ印：部屋の既読と、自分だけの「どこまで読んだか」（表のお知らせに使う）
@@ -2274,8 +2308,16 @@ textarea::placeholder{color:var(--roomSub)}
       const main = document.createElement('div'); main.className = 'ri-main';
       const name = document.createElement('input'); name.className = 'ri-name'; name.value = r.label || ''; name.placeholder = '名前のない部屋'; name.maxLength = 40;
       name.setAttribute('aria-label','部屋の名前');
-      name.addEventListener('change', () => saveMine(r.id, { label: name.value.trim() }));
-      name.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) name.blur(); });
+      name.enterKeyHint = 'done';
+      const ok = document.createElement('button'); ok.type = 'button'; ok.className = 'ri-ok'; ok.textContent = '決める';
+      let saved = r.label || '';
+      const keep = async () => { const v = name.value.trim(); if (v !== saved){ saved = v; await saveMine(r.id, { label: v }); } };
+      name.addEventListener('change', keep);
+      name.addEventListener('focus', () => { el.classList.add('editing'); setTimeout(() => ok.scrollIntoView({ block:'center', behavior:'smooth' }), 350); });
+      name.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== ok) el.classList.remove('editing'); }, 150));
+      ok.addEventListener('pointerdown', e => e.preventDefault());   // 押したときに入力欄の確定より先に消えないように
+      ok.addEventListener('click', async () => { await keep(); name.blur(); el.classList.remove('editing'); ok.textContent = '決めました'; setTimeout(() => { ok.textContent = '決める'; }, 1500); });
+      name.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) ok.click(); });
       const sub = document.createElement('p'); sub.className = 'ri-sub';
       if (r.isNew){ const n=document.createElement('span'); n.className='new'; n.setAttribute('aria-label','新しい書き込み'); sub.appendChild(n); }
       const when = document.createElement('span'); when.textContent = r.last ? `最後の書き込み ${fmtFull(r.last)}` : 'まだ書き込みなし'; sub.appendChild(when);
@@ -2288,7 +2330,7 @@ textarea::placeholder{color:var(--roomSub)}
         setTimeout(() => { if (rm.isConnected){ delete rm.dataset.sure; rm.textContent = '一覧から外す'; } }, 3000);
       });
       sub.append(ph, rm);
-      main.append(name, sub);
+      main.append(name, ok, sub);
       const go = document.createElement('button'); go.className = 'go'; go.type = 'button'; go.textContent = '入る';
       go.addEventListener('click', async () => { go.disabled = true; await enterFromDesk(r.phrase); go.disabled = false; });
       el.append(main, go); deskList.appendChild(el);
@@ -2316,6 +2358,11 @@ textarea::placeholder{color:var(--roomSub)}
     setTimeout(() => { resetTree(); zone.classList.remove('away'); busy = false; }, reduce ? 0 : 900);
   }
   $('deskClose').addEventListener('click', closeDeskToFront);
+  // 帳場で入力するとき、キーボードに決めるボタンが隠れないよう、その欄とボタンを画面の真ん中へ
+  desk.addEventListener('focusin', e => {
+    const box = e.target.closest && e.target.closest('.desk-add'); if (!box) return;
+    setTimeout(() => { const b = box.querySelector('.send'); (b || box).scrollIntoView({ block:'center', behavior:'smooth' }); }, 350);
+  });
   // #chouba で来たオーナーは、儀式なしでそのまま帳場へ
   capsReady.then(async () => {
     if (!window.__wantDesk) return;
@@ -2418,9 +2465,60 @@ textarea::placeholder{color:var(--roomSub)}
   });
   const grow = () => { input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,140)+'px'; };
   input.addEventListener('input', () => { grow(); sendBtn.disabled = !input.value.trim() || !canWrite; });
-  input.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey && !e.isComposing && e.keyCode!==229){ e.preventDefault(); send(); } });
+  // スマホでは改行キーで改行する（送るのは「送る」ボタン）。パソコンは Enter で送り、Shift+Enter で改行
+  const touchPad = matchMedia('(pointer: coarse)').matches;
+  input.addEventListener('keydown', e => { if (!touchPad && e.key==='Enter' && !e.shiftKey && !e.isComposing && e.keyCode!==229){ e.preventDefault(); send(); } });
   sendBtn.addEventListener('click', send);
   let sending=false;
+  // ---- 写真：端末の中で小さくしてから、文字と同じように鍵をかけて送る（外のサービスは使わない） ----
+  const picBtn = $('picBtn'), picIn = $('picIn');
+  picBtn.addEventListener('click', () => { if (!current || !canWrite || input.disabled) return; picIn.value=''; picIn.click(); });
+  picIn.addEventListener('change', async () => {
+    const f = picIn.files && picIn.files[0]; if (!f || !current || sending) return;
+    sending=true; picBtn.disabled=true; sendBtn.disabled=true; err.textContent='写真を小さくしています…';
+    try {
+      const url = await shrinkPhoto(f);
+      err.textContent='写真を送っています…';
+      const sealed = await seal(current.key, PHOTO + url);
+      await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
+      err.textContent=''; log.scrollTop = log.scrollHeight;
+    } catch(e){
+      const c = e && e.code;
+      err.textContent = c==='not_image' ? 'この写真は読み込めませんでした。別の写真で試してください。'
+        : (c==='permission-denied' || c==='invalid-argument' || c==='invalid_argument') ? '写真を送れませんでした（部屋の決まりで大きさが止められています）。オーナーに知らせてください。'
+        : c==='resource_exhausted' ? '少し間をあけてから送ってください。' : '写真を送れませんでした。もう一度試してください。';
+    } finally { sending=false; picBtn.disabled=false; sendBtn.disabled = !input.value.trim() || !canWrite; }
+  });
+  async function shrinkPhoto(file){
+    let bmp;
+    try { bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
+    catch { bmp = await new Promise((ok, ng) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ng({ code:'not_image' }); im.src = URL.createObjectURL(file); }); }
+    const W = bmp.width, H = bmp.height; if (!W || !H) throw { code:'not_image' };
+    for (const [side, q] of [[1280,.72],[1080,.65],[900,.6],[720,.55],[560,.5]]){
+      const r = Math.min(1, side / Math.max(W, H)), cv = document.createElement('canvas');
+      cv.width = Math.round(W*r); cv.height = Math.round(H*r);
+      const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+      const url = cv.toDataURL('image/jpeg', q);
+      if (url.length <= PHOTO_MAX) return url;
+    }
+    throw { code:'not_image' };
+  }
+  // 大きく見る・アルバム（この部屋の、読み込んだ分の写真を一覧に）
+  const viewer = $('viewer');
+  function showPhoto(url){ $('viewerImg').src = url; viewer.hidden = false; }
+  viewer.addEventListener('click', () => { viewer.hidden = true; $('viewerImg').removeAttribute('src'); });
+  function drawAlbum(){
+    const g = $('albumGrid'); g.innerHTML = '';
+    const ps = lastItems.filter(m => m.photo && m.photo.startsWith('data:image/')).reverse();
+    if (!ps.length){ const p=document.createElement('p'); p.textContent='まだ写真はありません。下の写真のボタンから送れます。'; g.appendChild(p); return; }
+    for (const m of ps){
+      const b=document.createElement('button'); b.type='button'; b.setAttribute('aria-label', `${dayLabel(m.at)} ${hm(m.at)} の写真`);
+      const im=document.createElement('img'); im.src=m.photo; im.alt=''; im.loading='lazy'; b.appendChild(im);
+      b.addEventListener('click', () => showPhoto(m.photo)); g.appendChild(b);
+    }
+  }
+  $('albumOpen').addEventListener('click', () => { drawAlbum(); $('album').hidden = false; });
+  $('albumClose').addEventListener('click', () => { $('album').hidden = true; });
   async function send(){
     const text = input.value.trim();
     if (!text || sending || !current || !canWrite) return;
