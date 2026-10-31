@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-31-unsend24">
+<meta name="engawa-version" content="2026-11-01-fastdesk">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -27,6 +27,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SODATE">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<!-- 帳場・縁側の待ち時間を短く：Firebaseの部品をページの読み込みと同時に取りにいく -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://securetoken.googleapis.com">
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Klee+One:wght@600&display=swap" rel="stylesheet">
@@ -1291,6 +1299,13 @@ textarea::placeholder{color:var(--roomSub)}
   const b64 = u => { const a = new Uint8Array(u); let s = ''; for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode(...a.subarray(i, i + 0x8000)); return btoa(s); };   // 写真のような大きいものも区切って変換
   const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
   const hex = u => [...u].map(x => x.toString(16).padStart(2,'0')).join('');
+  // 同じ合言葉の鍵は、ページを開いている間だけ覚えておく（2回目からは計算を待たない。画面を離れたら忘れる）
+  const keyCache = new Map();
+  function deriveFast(phrase){
+    const p = phrase.normalize('NFKC').trim();
+    if (!keyCache.has(p)) keyCache.set(p, derive(p).catch(e => { keyCache.delete(p); throw e; }));
+    return keyCache.get(p);
+  }
   async function derive(phrase){
     const base = await crypto.subtle.importKey('raw', te.encode(phrase.normalize('NFKC').trim()), 'PBKDF2', false, ['deriveBits']);
     const bits = new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', salt:te.encode('sodate-engawa-v1'), iterations:210000, hash:'SHA-256'}, base, 512));
@@ -1539,14 +1554,19 @@ textarea::placeholder{color:var(--roomSub)}
     $('nameSave').disabled = false;
   });
   $('nameIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) $('nameSave').click(); });
-  function stopChat(){ hideUndo(); $('picAsk').hidden = true; $('album').hidden = true; $('viewer').hidden = true; if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
+  function stopChat(){ opened = new Map(); hideUndo(); $('picAsk').hidden = true; $('album').hidden = true; $('viewer').hidden = true; if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
 
+  // 一度読み解いたメッセージは覚えておき、新しい書き込みや既読が来たときに全部を解き直さない（部屋を出たら忘れる）
+  let opened = new Map();
   async function render(docs, k){
     const my = ++seq;
     const items = await Promise.all(docs.map(async d => {
       const m = d.data() || {};
+      const memo = k.id + '/' + d.id + '/' + m.ct;
+      if (opened.has(memo)) return { id:d.id, uid:m.uid, at:m.at, ...opened.get(memo) };
       let text = null; try { text = await open_(k.key, m.iv, m.ct); } catch {}
       let photo = null; if (text && text.startsWith(PHOTO)){ photo = text.slice(PHOTO.length); text = ''; }
+      if (text !== null || photo) opened.set(memo, { text, photo });
       return { id:d.id, uid:m.uid, at:m.at, text, photo };
     }));
     const ids = [...new Set(items.map(m => m.uid).filter(Boolean))];
@@ -1682,13 +1702,14 @@ textarea::placeholder{color:var(--roomSub)}
       for (const [id, lastRead] of mine){
         if (watchers.has(id)){ watchers.get(id).lastRead = lastRead; watchers.get(id).check(); continue; }
         const w = { lastRead, latest:null, check(){
-          const l = this.latest; (l && l.uid !== myId && l.at > this.lastRead) ? unread.add(id) : unread.delete(id); showLetter(); renderDesk();
+          const l = this.latest; (l && l.uid !== myId && l.at > this.lastRead) ? unread.add(id) : unread.delete(id); showLetter(); renderDeskSoon();
         }};
         w.stop = db.collection(`rooms/${id}/messages`).orderBy('at','desc').limit(1)
           .onSnapshot(q => { const d = q.docs[0]; w.latest = d ? d.data() : null; w.check(); }, () => {});
         watchers.set(id, w);
       }
       showLetter(); renderDesk();
+      if (desk.classList.contains('open')) setTimeout(warmRooms, 0);
     }, () => {});
   })();
   function showLetter(){
@@ -2331,6 +2352,26 @@ textarea::placeholder{color:var(--roomSub)}
 
   /* ---------- 7. 帳場：オーナーだけの部屋の一覧 ---------- */
   let myRooms = new Map(), fromDesk = false;
+  // 部屋ごとの知らせが続けて届いても、帳場の一覧の描き直しは1回にまとめる
+  let deskFrame = 0;
+  function renderDeskSoon(){ if (deskFrame) return; deskFrame = requestAnimationFrame(() => { deskFrame = 0; renderDesk(); }); }
+  // 扉があると確かめた部屋（ページを開いている間だけ覚える）
+  const doorOk = new Set();
+  // 帳場を開いたら、裏で各部屋の鍵と扉を先に用意しておく（「入る」を押したときに待たない）
+  let warming = null;
+  function warmRooms(){
+    if (warming) return warming;
+    warming = (async () => {
+      for (const r of [...myRooms.values()]){
+        if (!r.phrase || !desk.classList.contains('open')) continue;
+        try {
+          const k = await deriveFast(r.phrase);
+          if (!doorOk.has(k.id)){ const d = await db.doc('doors/'+k.id).get(); if (d && d.exists) doorOk.add(k.id); }
+        } catch {}
+      }
+    })().finally(() => { warming = null; });
+    return warming;
+  }
   const desk = $('desk'), deskList = $('deskList'), deskErr = $('deskErr');
   async function saveMine(id, fields){
     if (!db || !myId) return;
@@ -2397,7 +2438,7 @@ textarea::placeholder{color:var(--roomSub)}
       sub.append(ph, rm);
       main.append(name, ok, sub);
       const go = document.createElement('button'); go.className = 'go'; go.type = 'button'; go.textContent = '入る';
-      go.addEventListener('click', async () => { go.disabled = true; await enterFromDesk(r.phrase); go.disabled = false; });
+      go.addEventListener('click', async () => { go.disabled = true; go.textContent = '入っています…'; try { await enterFromDesk(r.phrase); } finally { go.disabled = false; go.textContent = '入る'; } });
       el.append(main, go); deskList.appendChild(el);
     }
   }
@@ -2410,6 +2451,7 @@ textarea::placeholder{color:var(--roomSub)}
     desk.classList.add('open'); desk.setAttribute('aria-hidden','false');
     front.setAttribute('aria-hidden','true');
     renderDesk(); renderTipDesk(); $('tipMsg').textContent = '';
+    setTimeout(warmRooms, 0);
     $('sheetUrl').placeholder = sheetUrl ? '今つないでいるシートがあります（変えるときだけ貼る）' : 'Googleスプレッドシートのリンクを貼る';
     loadSheet();
     if (!tipDocs.length && user && user.seedTips && window.ENGAWA_SEED_TIPS){
@@ -2428,6 +2470,8 @@ textarea::placeholder{color:var(--roomSub)}
     const box = e.target.closest && e.target.closest('.desk-add'); if (!box) return;
     setTimeout(() => { const b = box.querySelector('.send'); (b || box).scrollIntoView({ block:'center', behavior:'smooth' }); }, 350);
   });
+  // オーナーの端末では、帳場に入る言葉を先に読んでおく（合言葉の欄から帳場へ入るときに待たない）
+  capsReady.then(() => { if (isOwner && db && myId) deskWord(); });
   // #chouba で来たオーナーは、儀式なしでそのまま帳場へ
   capsReady.then(async () => {
     if (!window.__wantDesk) return;
@@ -2441,7 +2485,7 @@ textarea::placeholder{color:var(--roomSub)}
     try {
       if (room.classList.contains('open')){ stopChat(); current = null; list.innerHTML = ''; room.classList.remove('open'); room.setAttribute('aria-hidden','true'); }
       if (desk.classList.contains('open')){ desk.classList.remove('open'); desk.setAttribute('aria-hidden','true'); }
-      fromDesk = false;
+      fromDesk = false; keyCache.clear(); doorOk.clear();
       if (gate.classList.contains('on')) resetGate();
       ['pass','newPhrase','okuOld','okuNew','deskWordIn','input'].forEach(id => { const el = $(id); if (el) el.value = ''; });
       front.classList.remove('dim'); front.removeAttribute('aria-hidden');
@@ -2484,14 +2528,19 @@ textarea::placeholder{color:var(--roomSub)}
     fromDesk = false;
   }
   async function enterFromDesk(phrase){
-    const k = await derive(phrase); k.phrase = phrase;
-    let door = null; try { door = await db.doc('doors/'+k.id).get(); } catch {}
-    if (!door || !door.exists){ deskErr.textContent = 'この部屋の扉が見つかりませんでした。'; return; }
+    const base = await deriveFast(phrase);
+    const k = { ...base, phrase };
+    if (!doorOk.has(k.id)){
+      let door = null; try { door = await db.doc('doors/'+k.id).get(); } catch {}
+      if (!door || !door.exists){ deskErr.textContent = 'この部屋の扉が見つかりませんでした。'; return; }
+      doorOk.add(k.id);
+    }
+    if (!desk.classList.contains('open')) return;          // 待っている間に画面を離れたときは入らない
     fromDesk = true; setRoomHead(k); current = k;
     room.classList.add('open'); room.setAttribute('aria-hidden','false');
+    startChat();                                          // 部屋が浮かび上がる間に、会話の読み込みを始めておく
     await wait(900);
-    desk.classList.remove('open'); desk.setAttribute('aria-hidden','true');
-    startChat();
+    if (current === k){ desk.classList.remove('open'); desk.setAttribute('aria-hidden','true'); }
   }
   $('okuChange').addEventListener('click', async () => {
     const oldP = $('okuOld').value, newP = $('okuNew').value.normalize('NFKC').trim();
