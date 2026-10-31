@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-10-31-photo">
+<meta name="engawa-version" content="2026-10-31-unsend24">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -440,6 +440,15 @@ textarea::placeholder{color:var(--roomSub)}
 .pic{flex:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--room3);background:var(--room2);color:var(--roomSub);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .pic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .pic:disabled{opacity:.4;cursor:default}
+.undo{display:flex;align-items:center;justify-content:center;gap:12px;margin:8px auto 0;max-width:640px;font-size:13px;color:var(--roomSub)}
+.undo[hidden]{display:none}
+.undo button{background:none;border:1px solid var(--orange);color:var(--orange);font:inherit;font-weight:700;font-size:14px;border-radius:999px;min-height:36px;padding:0 16px;cursor:pointer}
+.unsend{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin-top:6px}
+.unsend button{border:0;border-radius:12px;font:inherit;font-size:14px;font-weight:700;min-height:40px;padding:0 12px;cursor:pointer;white-space:nowrap}
+.unsend-go{background:#C0461B;color:#fff}
+.unsend-note{flex-basis:100%;margin:0;text-align:right;font-size:12px;color:var(--roomSub)}
+.unsend-no{background:var(--room2);color:var(--roomInk);border:1px solid var(--room3) !important}
+.msg.me .bubble,.msg.me .photo{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .msg .photo{display:block;padding:0;border:0;background:none;cursor:zoom-in;border-radius:14px;overflow:hidden;line-height:0}
 .msg .photo img{display:block;width:auto;height:auto;max-width:min(240px,62vw);max-height:300px;flex:none}
 .album{position:fixed;inset:0;z-index:60;background:var(--room);display:flex;flex-direction:column}
@@ -895,7 +904,9 @@ textarea::placeholder{color:var(--roomSub)}
       <button class="send" id="send" type="button" disabled>送る</button>
     </div>
     <p class="err" id="err" role="status"></p>
+    <div class="undo" id="undoBar" hidden><span>送りました</span><button type="button" id="undoBtn">取り消す</button></div>
   </div>
+  <div class="viewer" id="picAsk" hidden><img id="picAskImg" alt="送る写真"><p>この写真を送りますか？</p><div class="unsend"><button type="button" class="unsend-no" id="picNo">やめる</button><button type="button" class="send" id="picYes">送る</button></div></div>
   <div class="album" id="album" hidden>
     <header class="room-head"><div class="room-title">アルバム<small>この部屋で送られた写真</small></div><button class="back" id="albumClose" type="button">閉じる</button></header>
     <div class="grid" id="albumGrid"></div>
@@ -1528,7 +1539,7 @@ textarea::placeholder{color:var(--roomSub)}
     $('nameSave').disabled = false;
   });
   $('nameIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) $('nameSave').click(); });
-  function stopChat(){ $('album').hidden = true; $('viewer').hidden = true; if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
+  function stopChat(){ hideUndo(); $('picAsk').hidden = true; $('album').hidden = true; $('viewer').hidden = true; if (unsub){ unsub(); unsub=null; } if (readsUnsub){ readsUnsub(); readsUnsub=null; } }
 
   async function render(docs, k){
     const my = ++seq;
@@ -1536,7 +1547,7 @@ textarea::placeholder{color:var(--roomSub)}
       const m = d.data() || {};
       let text = null; try { text = await open_(k.key, m.iv, m.ct); } catch {}
       let photo = null; if (text && text.startsWith(PHOTO)){ photo = text.slice(PHOTO.length); text = ''; }
-      return { uid:m.uid, at:m.at, text, photo };
+      return { id:d.id, uid:m.uid, at:m.at, text, photo };
     }));
     const ids = [...new Set(items.map(m => m.uid).filter(Boolean))];
     let ps = {}; if (user && ids.length){ try { ps = await user.profiles(ids); } catch {} }
@@ -1578,12 +1589,66 @@ textarea::placeholder{color:var(--roomSub)}
       }
       const t=document.createElement('span'); t.textContent=hm(m.at); meta.appendChild(t);
       line.append(b, meta); body.append(who, line); row.append(img, body); list.appendChild(row);
+      if (mine && m.id) holdToUnsend(row, b, body, m);
       prev = m;
     }
     if (firstPaint || (fromMessages && near)) log.scrollTop = log.scrollHeight;
     if (fromMessages) firstPaint = false;
     if (!$('album').hidden) drawAlbum();
   }
+
+  // 送信取り消し：自分のメッセージを長押しすると「送信を取り消す」が出る（相手の画面からも消える）
+  let unsendOpen = null; const UNSEND_MS = 24*60*60*1000;
+  // 取り消す（back を渡すと、その文字を入力欄に戻して直せるようにする）
+  async function unsend(id, back){
+    if (!current || !id) return false;
+    const hit = lastItems.find(x => x.id === id);
+    if (hit && !(Date.now() - hit.at < UNSEND_MS)){ err.textContent = '送ってから24時間を過ぎたので、取り消せません。'; return false; }
+    try {
+      await db.doc(`rooms/${current.id}/messages/${id}`).delete();
+      if (back !== undefined && !input.value.trim()){ input.value = back; grow(); sendBtn.disabled = !canWrite; input.focus(); }
+      if (undoId === id) hideUndo();
+      err.textContent = back !== undefined ? '取り消しました。直して送れます。' : '送信を取り消しました。';
+      const msg = err.textContent; setTimeout(() => { if (err.textContent === msg) err.textContent = ''; }, 3000);
+      return true;
+    } catch { err.textContent = '取り消せませんでした。もう一度試してください。'; return false; }
+  }
+  // 送った直後の10秒は、入力欄の下に「取り消す」が出る（文字なら入力欄に戻る）
+  let undoId = null, undoText, undoTimer = null;
+  function showUndo(id, text){ undoId = id; undoText = text; $('undoBar').hidden = false; clearTimeout(undoTimer); undoTimer = setTimeout(hideUndo, 10000); }
+  function hideUndo(){ undoId = null; undoText = undefined; $('undoBar').hidden = true; clearTimeout(undoTimer); }
+  $('undoBtn').addEventListener('click', () => { if (undoId) unsend(undoId, undoText); });
+  function closeUnsend(){ if (unsendOpen){ unsendOpen.remove(); unsendOpen = null; } }
+  function holdToUnsend(row, b, body, m){
+    let t = null, held = false;
+    const start = () => { held = false; clearTimeout(t); t = setTimeout(() => { held = true; showUnsend(body, m); if (navigator.vibrate) navigator.vibrate(15); }, 500); };
+    const cancel = () => clearTimeout(t);
+    b.addEventListener('pointerdown', start);
+    ['pointerup','pointerleave','pointercancel'].forEach(ev => b.addEventListener(ev, cancel));
+    b.addEventListener('contextmenu', e => { e.preventDefault(); showUnsend(body, m); });
+    b.addEventListener('click', e => { if (held){ e.stopImmediatePropagation(); e.preventDefault(); held = false; } }, true);
+  }
+  function showUnsend(body, m){
+    closeUnsend();
+    const bar = document.createElement('div'); bar.className = 'unsend';
+    const btn = (cls, label, fn) => { const x = document.createElement('button'); x.type = 'button'; x.className = cls; x.textContent = label; x.addEventListener('click', fn); return x; };
+    const no = btn('unsend-no', 'やめる', closeUnsend);
+    const go = btn('unsend-go', '取り消す', async () => { go.disabled = true; go.textContent = '取り消し中…'; if (await unsend(m.id)) closeUnsend(); else { go.disabled = false; go.textContent = '取り消す'; } });
+    bar.append(no);
+    const late = !(typeof m.at === 'number' && Date.now() - m.at < UNSEND_MS);   // 取り消せるのは送ってから24時間まで
+    if (late){
+      if (m.text) bar.append(btn('unsend-no', 'コピー', async () => { try { await navigator.clipboard.writeText(m.text); err.textContent = 'コピーしました。'; } catch { err.textContent = 'コピーできませんでした。'; } closeUnsend(); }));
+      const note = document.createElement('p'); note.className = 'unsend-note'; note.textContent = '送ってから24時間を過ぎたので、取り消せません';
+      bar.append(note); body.appendChild(bar); unsendOpen = bar; bar.scrollIntoView({ block:'nearest', behavior:'smooth' }); return;
+    }
+    if (m.text){
+      bar.append(btn('unsend-no', 'コピー', async () => { try { await navigator.clipboard.writeText(m.text); err.textContent = 'コピーしました。'; } catch { err.textContent = 'コピーできませんでした。'; } closeUnsend(); }));
+      bar.append(btn('unsend-no', '直す', async () => { if (await unsend(m.id, m.text)) closeUnsend(); }));
+    }
+    bar.append(go); body.appendChild(bar); unsendOpen = bar;
+    bar.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  }
+  log.addEventListener('pointerdown', e => { if (unsendOpen && !unsendOpen.contains(e.target)) setTimeout(closeUnsend, 0); });
 
   // 読んだ印：部屋の既読と、自分だけの「どこまで読んだか」（表のお知らせに使う）
   async function markRead(){
@@ -2478,10 +2543,13 @@ textarea::placeholder{color:var(--roomSub)}
     sending=true; picBtn.disabled=true; sendBtn.disabled=true; err.textContent='写真を小さくしています…';
     try {
       const url = await shrinkPhoto(f);
+      err.textContent='';
+      if (!(await askPhoto(url))) return;
       err.textContent='写真を送っています…';
       const sealed = await seal(current.key, PHOTO + url);
-      await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
+      const ref = await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
       err.textContent=''; log.scrollTop = log.scrollHeight;
+      if (ref && ref.id) showUndo(ref.id);
     } catch(e){
       const c = e && e.code;
       err.textContent = c==='not_image' ? 'この写真は読み込めませんでした。別の写真で試してください。'
@@ -2489,6 +2557,14 @@ textarea::placeholder{color:var(--roomSub)}
         : c==='resource_exhausted' ? '少し間をあけてから送ってください。' : '写真を送れませんでした。もう一度試してください。';
     } finally { sending=false; picBtn.disabled=false; sendBtn.disabled = !input.value.trim() || !canWrite; }
   });
+  // 送る前に、選んだ写真をいったん大きく見せて確かめる
+  function askPhoto(url){
+    return new Promise(ok => {
+      const box = $('picAsk'); $('picAskImg').src = url; box.hidden = false;
+      const done = v => { box.hidden = true; $('picAskImg').removeAttribute('src'); $('picYes').onclick = $('picNo').onclick = null; ok(v); };
+      $('picYes').onclick = () => done(true); $('picNo').onclick = () => done(false);
+    });
+  }
   async function shrinkPhoto(file){
     let bmp;
     try { bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
@@ -2525,8 +2601,9 @@ textarea::placeholder{color:var(--roomSub)}
     sending=true; sendBtn.disabled=true; err.textContent='';
     try {
       const sealed = await seal(current.key, text.slice(0,1000));
-      await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
+      const ref = await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
       input.value=''; grow(); log.scrollTop = log.scrollHeight;
+      if (ref && ref.id) showUndo(ref.id, text.slice(0,1000));
     } catch(e){
       const c = e && e.code;
       if (c==='invalid_argument' || c==='permission-denied'){ canWrite=false; input.disabled=true; err.textContent='書き込めませんでした。ページを開き直してください。'; }
