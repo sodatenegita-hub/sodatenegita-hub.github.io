@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-11-01-carry">
+<meta name="engawa-version" content="2026-11-01-carry2">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -105,6 +105,7 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .catch .c1{transform:translateX(.5%)}
 .catch .c2{transform:translateX(-.8%)}
 /* もうひとつの入口：「一緒に育てる」を3秒長押しすると持ち上がり、上の木へ運べる */
+.catch{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .catch .c2{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:color .4s ease}
 .catch .c2.holding{color:var(--orange);transition:color 2.6s ease}
 .catch .c2.lifted{opacity:.15;transition:opacity .3s ease}
@@ -1311,6 +1312,7 @@ textarea::placeholder{color:var(--roomSub)}
     const overTree = (x, y) => { const r = zone.getBoundingClientRect(), m = 24; return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m; };
     function clearHold(){ clearTimeout(holdTimer); clearTimeout(colorTimer); words.classList.remove('holding'); }
     words.addEventListener('contextmenu', e => e.preventDefault());
+    ['selectstart','dragstart'].forEach(ev => words.addEventListener(ev, e => e.preventDefault()));   // iPhoneで長押ししても文字の選択にならないように
     words.addEventListener('pointerdown', e => {
       if (busy || lifted || (e.pointerType === 'mouse' && e.button !== 0)) return;
       pid = e.pointerId; startX = e.clientX; startY = e.clientY;
