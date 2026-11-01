@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-11-01-carry5tap">
+<meta name="engawa-version" content="2026-11-01-carrytogether">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -1378,14 +1378,12 @@ textarea::placeholder{color:var(--roomSub)}
     gate.classList.add('dark'); front.classList.add('dim');
     await wait(1000);
     const size = Math.min(220, innerWidth*0.55);
+    // 木が真ん中へ寄っていくのと同じタイミングで、赤い実も降りてくる（5回タップで合言葉の欄）
+    armFruit(gtree.querySelector('svg'));
     gtree.style.transform = `translate(${(innerWidth-size)/2 - r.left}px,${innerHeight*0.12 - r.top}px) scale(${size/r.width})`;
-    await wait(1200);
-    // ここからは今の入口と同じ：「今日の一言」→ 赤い実が降りてくる → 5回タップで合言葉の欄
     word.innerHTML = '';
     [...'今日の一言'].forEach(c => { const sp=document.createElement('span'); sp.textContent=c; sp.setAttribute('aria-hidden','true'); word.appendChild(sp); });
     for (const sp of word.children){ sp.classList.add('in'); await wait(140); }
-    await wait(300);
-    armFruit(gtree.querySelector('svg'));
     await wait(1200);
     leave.classList.add('in');
   }
