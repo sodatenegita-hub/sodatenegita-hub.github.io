@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-11-01-hold15">
+<meta name="engawa-version" content="2026-11-01-carrytogether">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -1363,7 +1363,7 @@ textarea::placeholder{color:var(--roomSub)}
       openGateByWords();
     }
   })();
-  // 運ばれた言葉を受けて、灯りが落ち、すぐ合言葉の欄が出る（実を拾う儀式は通らない）
+  // 運ばれた言葉を受けて、灯りが落ち、赤い実が降りてくる（木を育てて実を拾うところは通らない。5回タップは残す）
   async function openGateByWords(){
     if (busy) return;
     busy = true; clearTimeout(fruitTimer);
@@ -1372,16 +1372,20 @@ textarea::placeholder{color:var(--roomSub)}
     gtree.querySelectorAll('.hit').forEach(h => h.remove());
     Object.assign(gtree.style, {left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px', transform:'none', opacity:'1'});
     gate.classList.remove('fadeout'); gate.classList.add('on'); gate.setAttribute('aria-hidden','false');
-    slot.classList.add('gone'); word.innerHTML = '';
+    word.innerHTML = '';
     zone.classList.add('away');
     gtree.getBoundingClientRect();
     gate.classList.add('dark'); front.classList.add('dim');
     await wait(1000);
     const size = Math.min(220, innerWidth*0.55);
+    // 木が真ん中へ寄っていくのと同じタイミングで、赤い実も降りてくる（5回タップで合言葉の欄）
+    armFruit(gtree.querySelector('svg'));
     gtree.style.transform = `translate(${(innerWidth-size)/2 - r.left}px,${innerHeight*0.12 - r.top}px) scale(${size/r.width})`;
+    word.innerHTML = '';
+    [...'今日の一言'].forEach(c => { const sp=document.createElement('span'); sp.textContent=c; sp.setAttribute('aria-hidden','true'); word.appendChild(sp); });
+    for (const sp of word.children){ sp.classList.add('in'); await wait(140); }
     await wait(1200);
     leave.classList.add('in');
-    showField();
   }
 
   /* ---------- 3. 合言葉 → 鍵 → 部屋 ---------- */
