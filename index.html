@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-11-01-fastdesk">
+<meta name="engawa-version" content="2026-11-01-carry">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -104,6 +104,15 @@ h1{font-size:clamp(26px,7vw,34px);line-height:1.4;margin:18px 0 6px;font-weight:
 .catch span{display:block;white-space:nowrap}
 .catch .c1{transform:translateX(.5%)}
 .catch .c2{transform:translateX(-.8%)}
+/* もうひとつの入口：「一緒に育てる」を3秒長押しすると持ち上がり、上の木へ運べる */
+.catch .c2{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:color .4s ease}
+.catch .c2.holding{color:var(--orange);transition:color 2.6s ease}
+.catch .c2.lifted{opacity:.15;transition:opacity .3s ease}
+.carry{position:fixed;z-index:25;left:0;top:0;margin:0;pointer-events:none;white-space:nowrap;color:var(--orange);font-weight:500;
+  letter-spacing:.06em;transform:translate(-50%,-50%) scale(1.08);text-shadow:0 2px 12px rgba(253,133,36,.35);transition:opacity .4s ease}
+.carry.home{transition:left .6s cubic-bezier(.45,0,.2,1), top .6s cubic-bezier(.45,0,.2,1), transform .6s ease}
+.carry.into{transition:left .7s cubic-bezier(.45,0,.2,1), top .7s cubic-bezier(.45,0,.2,1), transform .7s ease, opacity .7s ease;transform:translate(-50%,-50%) scale(.2);opacity:0}
+.tree-zone.near{filter:drop-shadow(0 0 10px rgba(253,133,36,.55));transition:filter .3s ease}
 .tips{list-style:none;margin:44px 0 0;padding:0}
 .lock{display:inline-block;width:14px;height:12px;margin-right:8px;border:2px solid var(--orange);border-radius:3px;position:relative;vertical-align:-1px}
 .lock::before{content:"";position:absolute;left:1px;top:-9px;width:8px;height:8px;border:2px solid var(--orange);border-bottom:0;border-radius:6px 6px 0 0}
@@ -1293,6 +1302,85 @@ textarea::placeholder{color:var(--roomSub)}
     resetTree(); zone.classList.remove('away'); busy=false;
   }
   leave.addEventListener('click', () => { stopIdle(); closeGate(); });
+
+  /* ---------- 3b. もうひとつの入口：「一緒に育てる」を3秒長押し → 上の木へ運ぶ → 合言葉の欄 ---------- */
+  (function(){
+    const words = document.querySelector('.catch .c2'); if (!words) return;
+    const HOLD = 3000;
+    let holdTimer = null, colorTimer = null, lifted = false, carry = null, startX = 0, startY = 0, pid = null;
+    const overTree = (x, y) => { const r = zone.getBoundingClientRect(), m = 24; return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m; };
+    function clearHold(){ clearTimeout(holdTimer); clearTimeout(colorTimer); words.classList.remove('holding'); }
+    words.addEventListener('contextmenu', e => e.preventDefault());
+    words.addEventListener('pointerdown', e => {
+      if (busy || lifted || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      pid = e.pointerId; startX = e.clientX; startY = e.clientY;
+      clearHold();
+      colorTimer = setTimeout(() => words.classList.add('holding'), 600);      // 押し続けると、じわっと色が変わる
+      holdTimer = setTimeout(() => lift(e.clientX, e.clientY), HOLD);
+    });
+    words.addEventListener('pointermove', e => {
+      if (e.pointerId !== pid) return;
+      if (!lifted){ if (Math.hypot(e.clientX - startX, e.clientY - startY) > 12) clearHold(); return; }   // 3秒たつ前に指が動いたら、ふつうのスクロール
+      moveTo(e.clientX, e.clientY);
+    });
+    // 持ち上げたあとは、指を動かしても画面がスクロールしないように
+    words.addEventListener('touchmove', e => { if (lifted) e.preventDefault(); }, { passive:false });
+    words.addEventListener('pointerup', e => { if (e.pointerId !== pid) return; clearHold(); if (lifted) drop(e.clientX, e.clientY); });
+    words.addEventListener('pointercancel', e => { if (e.pointerId !== pid) return; clearHold(); if (lifted) goHome(); });
+    function lift(x, y){
+      if (busy) return;
+      lifted = true; words.classList.remove('holding');
+      try { words.setPointerCapture(pid); } catch {}
+      try { navigator.vibrate && navigator.vibrate(15); } catch {}
+      const cs = getComputedStyle(words);
+      carry = document.createElement('p'); carry.className = 'carry'; carry.setAttribute('aria-hidden', 'true');
+      carry.textContent = words.textContent; carry.style.fontSize = cs.fontSize; carry.style.fontFamily = cs.fontFamily;
+      document.body.appendChild(carry);
+      words.classList.add('lifted');
+      moveTo(x, y);
+    }
+    function moveTo(x, y){
+      if (!carry) return;
+      carry.style.left = x + 'px'; carry.style.top = y + 'px';
+      zone.classList.toggle('near', overTree(x, y));                         // 木の上に来ると、木がふわっと光る
+    }
+    function finish(){ if (carry) carry.remove(); carry = null; lifted = false; pid = null; words.classList.remove('lifted'); zone.classList.remove('near'); }
+    async function goHome(){                                                // 木の外で離したら、元の場所へ戻る
+      if (!carry) return finish();
+      const r = words.getBoundingClientRect();
+      carry.classList.add('home'); carry.getBoundingClientRect();
+      carry.style.left = (r.left + r.width / 2) + 'px'; carry.style.top = (r.top + r.height / 2) + 'px'; carry.style.transform = 'translate(-50%,-50%) scale(1)';
+      await wait(600); finish();
+    }
+    async function drop(x, y){
+      if (!overTree(x, y) || busy){ goHome(); return; }
+      const r = zone.getBoundingClientRect();
+      carry.classList.add('into'); carry.getBoundingClientRect();            // 木の中へ吸い込まれる
+      carry.style.left = (r.left + r.width / 2) + 'px'; carry.style.top = (r.top + r.height * .45) + 'px';
+      await wait(700); finish();
+      openGateByWords();
+    }
+  })();
+  // 運ばれた言葉を受けて、灯りが落ち、すぐ合言葉の欄が出る（実を拾う儀式は通らない）
+  async function openGateByWords(){
+    if (busy) return;
+    busy = true; clearTimeout(fruitTimer);
+    const r = zone.getBoundingClientRect();
+    gtree.innerHTML = tree.outerHTML.replace('id="treeSvg"','');
+    gtree.querySelectorAll('.hit').forEach(h => h.remove());
+    Object.assign(gtree.style, {left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px', transform:'none', opacity:'1'});
+    gate.classList.remove('fadeout'); gate.classList.add('on'); gate.setAttribute('aria-hidden','false');
+    slot.classList.add('gone'); word.innerHTML = '';
+    zone.classList.add('away');
+    gtree.getBoundingClientRect();
+    gate.classList.add('dark'); front.classList.add('dim');
+    await wait(1000);
+    const size = Math.min(220, innerWidth*0.55);
+    gtree.style.transform = `translate(${(innerWidth-size)/2 - r.left}px,${innerHeight*0.12 - r.top}px) scale(${size/r.width})`;
+    await wait(1200);
+    leave.classList.add('in');
+    showField();
+  }
 
   /* ---------- 3. 合言葉 → 鍵 → 部屋 ---------- */
   const te = new TextEncoder(), td = new TextDecoder();
