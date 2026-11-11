@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SODATE｜営業中に、すぐ使える</title>
-<meta name="engawa-version" content="2026-11-11-roomfruit">
+<meta name="engawa-version" content="2026-11-11-photofit">
 <meta name="description" content="あなたの中にあるものを、一緒に育てる。お店に立ちながら開ける、接客の道具箱。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SODATE">
@@ -938,7 +938,7 @@ textarea::placeholder{color:var(--roomSub)}
     <p class="err" id="err" role="status"></p>
     <div class="undo" id="undoBar" hidden><span>送りました</span><button type="button" id="undoBtn">取り消す</button></div>
   </div>
-  <div class="viewer" id="picAsk" hidden><img id="picAskImg" alt="送る写真"><p>この写真を送りますか？</p><div class="unsend"><button type="button" class="unsend-no" id="picNo">やめる</button><button type="button" class="send" id="picYes">送る</button></div></div>
+  <div class="viewer" id="picAsk" hidden><img id="picAskImg" alt="送る写真"><p id="picAskMsg">この写真を送りますか？</p><div class="unsend"><button type="button" class="unsend-no" id="picNo">やめる</button><button type="button" class="send" id="picYes">送る</button></div></div>
   <div class="album" id="album" hidden>
     <header class="room-head"><div class="room-title">アルバム<small>この部屋で送られた写真</small></div><button class="back" id="albumClose" type="button">閉じる</button></header>
     <div class="grid" id="albumGrid"></div>
@@ -2776,44 +2776,130 @@ textarea::placeholder{color:var(--roomSub)}
   picBtn.addEventListener('click', () => { if (!current || !canWrite || input.disabled) return; picIn.value=''; picIn.click(); });
   picIn.addEventListener('change', async () => {
     const f = picIn.files && picIn.files[0]; if (!f || !current || sending) return;
-    sending=true; picBtn.disabled=true; sendBtn.disabled=true; err.textContent='写真を小さくしています…';
+    sending=true; picBtn.disabled=true; sendBtn.disabled=true; err.textContent='写真を送れる大きさに直しています…';
     try {
-      const url = await shrinkPhoto(f);
+      const src = await preparePhoto(f);
+      let shot = encodePhoto(src, photoLimit);
       err.textContent='';
-      if (!(await askPhoto(url))) return;
+      if (!(await askPhoto(shot, src))) return;
       err.textContent='写真を送っています…';
-      const sealed = await seal(current.key, PHOTO + url);
-      const ref = await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
+      let ref = null, retried = false;
+      for (;;){
+        try {
+          const sealed = await seal(current.key, PHOTO + shot.url);
+          ref = await db.collection(`rooms/${current.id}/messages`).add({ uid:myId, at:Date.now(), ...sealed });
+          break;
+        } catch(e){
+          // 大きさで止められたら、自動でもう一段小さくして送り直す（最後まで小さくしてもだめなら、あきらめる）
+          const c = e && e.code;
+          if (!(c==='permission-denied' || c==='invalid-argument' || c==='invalid_argument')) throw e;
+          const smaller = encodePhoto(src, Math.floor(shot.url.length * 0.6));
+          if (!smaller || smaller.url.length >= shot.url.length) throw e;
+          shot = smaller; retried = true; err.textContent='もう少し小さくして送り直しています…';
+        }
+      }
+      if (retried){ photoLimit = shot.url.length; try { localStorage.setItem('engawa-photo-max', String(photoLimit)); } catch {} }
       err.textContent=''; log.scrollTop = log.scrollHeight;
       if (ref && ref.id) showUndo(ref.id);
     } catch(e){
       const c = e && e.code;
       err.textContent = c==='not_image' ? 'この写真は読み込めませんでした。別の写真で試してください。'
-        : (c==='permission-denied' || c==='invalid-argument' || c==='invalid_argument') ? '写真を送れませんでした（部屋の決まりで大きさが止められています）。オーナーに知らせてください。'
+        : (c==='permission-denied' || c==='invalid-argument' || c==='invalid_argument') ? '写真を送れませんでした（一番小さくしても部屋の決まりで止められました）。オーナーに知らせてください。'
         : c==='resource_exhausted' ? '少し間をあけてから送ってください。' : '写真を送れませんでした。もう一度試してください。';
     } finally { sending=false; picBtn.disabled=false; sendBtn.disabled = !input.value.trim() || !canWrite; }
   });
-  // 送る前に、選んだ写真をいったん大きく見せて確かめる
-  function askPhoto(url){
+  // 送る前に、選んだ写真をいったん大きく見せて確かめる（小さくしたことも一言そえる）
+  function askPhoto(shot, src){
     return new Promise(ok => {
-      const box = $('picAsk'); $('picAskImg').src = url; box.hidden = false;
+      const box = $('picAsk'), msg = $('picAskMsg'); $('picAskImg').src = shot.url; box.hidden = false;
+      const shrunk = src.origW > shot.w || src.origH > shot.h;
+      msg.textContent = 'この写真を送りますか？' + (shrunk ? `（送れる大きさに自動で小さくしました：約${Math.max(1, Math.round(shot.url.length*3/4/1024))}KB）` : '');
       const done = v => { box.hidden = true; $('picAskImg').removeAttribute('src'); $('picYes').onclick = $('picNo').onclick = null; ok(v); };
       $('picYes').onclick = () => done(true); $('picNo').onclick = () => done(false);
     });
   }
-  async function shrinkPhoto(file){
-    let bmp;
-    try { bmp = await createImageBitmap(file, { imageOrientation:'from-image' }); }
-    catch { bmp = await new Promise((ok, ng) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ng({ code:'not_image' }); im.src = URL.createObjectURL(file); }); }
-    const W = bmp.width, H = bmp.height; if (!W || !H) throw { code:'not_image' };
-    for (const [side, q] of [[1280,.72],[1080,.65],[900,.6],[720,.55],[560,.5]]){
-      const r = Math.min(1, side / Math.max(W, H)), cv = document.createElement('canvas');
-      cv.width = Math.round(W*r); cv.height = Math.round(H*r);
-      const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
-      const url = cv.toDataURL('image/jpeg', q);
-      if (url.length <= PHOTO_MAX) return url;
+  // ---- 写真を送れる大きさに直す ----
+  // どんなに大きな写真（iPhoneの4800万画素・HEICなど）でも、まず長い辺1280px以下の下絵を作り、
+  // そこから「上限に収まるまで」大きさと画質を少しずつ下げてJPEGにする。
+  const PHOTO_STEPS = [[1280,.72],[1080,.65],[900,.6],[720,.55],[560,.5],[420,.5],[320,.45]];
+  let photoLimit = PHOTO_MAX;   // 一度「大きさで止められた」端末では、通った大きさを覚えて次から最初に使う
+  try { const v = +localStorage.getItem('engawa-photo-max'); if (v >= 20000 && v < PHOTO_MAX) photoLimit = v; } catch {}
+  const isHeic = (file, head) => /image\/hei[cf]/i.test(file.type || '') || /\.hei[cf]$/i.test(file.name || '')
+    || (head && /^ftyp(heic|heix|hevc|hevx|heim|heis|mif1|msf1)/.test(head));
+  async function fileHead(file){
+    try { const b = new Uint8Array(await file.slice(4, 12).arrayBuffer()); return String.fromCharCode(...b); } catch { return ''; }
+  }
+  function imgFrom(blob){
+    return new Promise((ok, ng) => {
+      const u = URL.createObjectURL(blob), im = new Image();
+      im.onload = () => { URL.revokeObjectURL(u); ok(im); };
+      im.onerror = () => { URL.revokeObjectURL(u); ng({ code:'not_image' }); };
+      im.src = u;
+    });
+  }
+  async function decodeBlob(blob){
+    try { return await createImageBitmap(blob, { imageOrientation:'from-image' }); } catch {}
+    return await imgFrom(blob);
+  }
+  let heicLib = null;
+  function loadHeic(){
+    if (!heicLib) heicLib = new Promise((ok, ng) => {
+      if (window.heic2any) return ok(window.heic2any);
+      const s = document.createElement('script'); s.src = 'lib/heic2any.min.js'; s.async = true;
+      s.onload = () => window.heic2any ? ok(window.heic2any) : ng({ code:'not_image' });
+      s.onerror = () => { heicLib = null; ng({ code:'not_image' }); };
+      document.head.appendChild(s);
+    });
+    return heicLib;
+  }
+  async function preparePhoto(file){
+    let pic = null;
+    try { pic = await decodeBlob(file); } catch {}
+    if (!pic || !(pic.width && pic.height)){
+      // この端末がHEICを読めないとき（パソコンのChromeなど）だけ、変換の部品を読み込んでJPEGにしてから読む
+      if (!isHeic(file, await fileHead(file))) throw { code:'not_image' };
+      try {
+        const conv = await loadHeic();
+        let out = await conv({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+        if (Array.isArray(out)) out = out[0];
+        pic = await decodeBlob(out);
+      } catch { throw { code:'not_image' }; }
     }
-    throw { code:'not_image' };
+    const W = pic.width, H = pic.height; if (!W || !H) throw { code:'not_image' };
+    // 大きく縮めるときは半分ずつ縮めると、細かい所がつぶれにくい
+    let cur = pic, cw = W, ch = H; const top = PHOTO_STEPS[0][0];
+    while (Math.max(cw, ch) > top){
+      const r = Math.max(0.5, top / Math.max(cw, ch)), nw = Math.max(1, Math.round(cw*r)), nh = Math.max(1, Math.round(ch*r));
+      const cv = document.createElement('canvas'); cv.width = nw; cv.height = nh;
+      const g = cv.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+      g.fillStyle = '#fff'; g.fillRect(0, 0, nw, nh); g.drawImage(cur, 0, 0, nw, nh);
+      if (cur !== pic) { cur.width = cur.height = 0; }
+      cur = cv; cw = nw; ch = nh;
+    }
+    if (cur === pic){
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.drawImage(pic, 0, 0); cur = cv;
+    }
+    try { pic.close && pic.close(); } catch {}
+    cur.origW = W; cur.origH = H;
+    return cur;
+  }
+  function encodePhoto(src, limit){
+    let last = null;
+    for (const [side, q] of PHOTO_STEPS){
+      const r = Math.min(1, side / Math.max(src.width, src.height));
+      const w = Math.max(1, Math.round(src.width*r)), h = Math.max(1, Math.round(src.height*r));
+      let url;
+      if (r === 1) url = src.toDataURL('image/jpeg', q);
+      else {
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const g = cv.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, w, h);
+        url = cv.toDataURL('image/jpeg', q); cv.width = cv.height = 0;
+      }
+      last = { url, w, h };
+      if (url.length <= limit) return last;
+    }
+    return last;   // どうしても上限に届かないときは一番小さいもの（送ってみて、止められたら知らせる）
   }
   // 大きく見る・アルバム（この部屋の、読み込んだ分の写真を一覧に）
   const viewer = $('viewer');
