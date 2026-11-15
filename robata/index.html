@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>料理写真メーカー</title>
+<style>
+:root{
+  --bg:#f7f3ee; --card:#fff; --ink:#2b2420; --sub:#7a6d63; --line:#e6ddd3;
+  --accent:#e2701f; --accent-ink:#fff; --soft:#fbeee2; --warn:#a24b0f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1815; --card:#28221e; --ink:#f3ece5; --sub:#b5a89c; --line:#3d342e;
+    --accent:#f08a3c; --accent-ink:#1c1815; --soft:#3a2b20; --warn:#f5a66b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1815; --card:#28221e; --ink:#f3ece5; --sub:#b5a89c; --line:#3d342e;
+  --accent:#f08a3c; --accent-ink:#1c1815; --soft:#3a2b20; --warn:#f5a66b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+main{max-width:640px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:22px;margin:8px 0 2px}
+.lead{color:var(--sub);font-size:14px;margin:0 0 14px}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1;padding:12px 8px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:12px;font-size:15px;font-weight:600}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.card h2{font-size:16px;margin:0 0 8px}
+.step{display:inline-block;background:var(--soft);color:var(--warn);border-radius:99px;padding:0 10px;font-size:12px;font-weight:700;margin-right:6px}
+label.btn,button.btn{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;border:0;
+  background:var(--accent);color:var(--accent-ink);font-size:16px;font-weight:700;cursor:pointer}
+button.btn.sub{background:var(--soft);color:var(--warn)}
+button.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;padding:10px 4px;border:0;background:var(--card);color:var(--ink);font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.thumbs{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid transparent;flex:none}
+.thumbs img.on{border-color:var(--accent)}
+.stage{position:relative;width:100%;aspect-ratio:1/1;background:#111;border-radius:12px;overflow:hidden;touch-action:none}
+.stage canvas{width:100%;height:100%;display:block}
+.stage .busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:rgba(0,0,0,.6);color:#fff;font-size:14px;text-align:center;padding:20px}
+.stage.loading .busy{display:flex}
+.compare{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:99px;padding:6px 12px;font-size:13px}
+.slider{margin:10px 0}
+.slider .top{display:flex;justify-content:space-between;font-size:14px}
+.slider .top span:last-child{color:var(--sub)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=text]{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--bg);color:var(--ink)}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0}
+.hint{font-size:13px;color:var(--sub);margin:6px 0 0}
+.note{font-size:13px;background:var(--soft);color:var(--warn);border-radius:10px;padding:10px 12px;margin:10px 0}
+textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--bg);color:var(--ink);font-family:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips button{padding:6px 10px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font-size:13px}
+.hidden{display:none!important}
+ol.tips{padding-left:20px;margin:6px 0;font-size:14px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>料理写真メーカー</h1>
+  <p class="lead">モバイルオーダー用の料理写真を、iPhoneだけで仕上げる道具。写真はこのiPhoneの中だけで加工され、外には送られません。</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="photo">撮った写真を仕上げる</button>
+    <button role="tab" aria-selected="false" data-tab="gen">イメージ画像を作る</button>
+  </div>
+
+  <!-- ===== タブ1：写真を仕上げる ===== -->
+  <section id="tab-photo">
+    <div class="card">
+      <h2><span class="step">1</span>写真を選ぶ</h2>
+      <label class="btn" for="file">写真を選ぶ（何枚でも）</label>
+      <input id="file" type="file" accept="image/*" multiple class="hidden">
+      <div class="thumbs" id="thumbs"></div>
+      <p class="hint">コツ：お店のテーブルの上で、斜め上（45度くらい）から、照明の下で撮ると一番自然です。</p>
+    </div>
+
+    <div class="card" id="editor" style="display:none">
+      <h2><span class="step">2</span>背景を選ぶ</h2>
+      <div class="seg" id="bgmode">
+        <button aria-pressed="true" data-v="keep">そのまま<br><small>テーブルで撮った</small></button>
+        <button aria-pressed="false" data-v="table">テーブルに差し替え<br><small>別の場所で撮った</small></button>
+      </div>
+      <p class="hint" id="bghint">差し替えは、料理とお皿だけを切り抜いて、店のテーブルの上に置き直します。初回だけ準備に1分ほどかかります。</p>
+
+      <h2 style="margin-top:16px"><span class="step">3</span>仕上がりを見る</h2>
+      <div class="stage" id="stage">
+        <canvas id="view" width="900" height="900"></canvas>
+        <button class="compare" id="compare">押す間 元の写真</button>
+        <div class="busy" id="busy">準備中…</div>
+      </div>
+      <p class="hint">写真を指で動かすと位置を変えられます。</p>
+
+      <div class="slider"><div class="top"><span>大きさ</span><span id="zoomv"></span></div>
+        <input type="range" id="zoom" min="100" max="250" value="100"></div>
+      <div class="slider"><div class="top"><span>シズル感（つや・色・くっきり）</span><span id="sizzlev"></span></div>
+        <input type="range" id="sizzle" min="0" max="100" value="60"></div>
+      <div class="slider"><div class="top"><span>明るさ</span><span id="brightv"></span></div>
+        <input type="range" id="bright" min="-40" max="40" value="0"></div>
+      <div class="slider"><div class="top"><span>温かみ（オレンジ寄り）</span><span id="warmv"></span></div>
+        <input type="range" id="warm" min="-30" max="30" value="6"></div>
+
+      <div class="seg" id="ratio" style="margin-top:6px">
+        <button aria-pressed="true" data-v="1">正方形 1:1</button>
+        <button aria-pressed="false" data-v="0.75">横長 4:3</button>
+      </div>
+
+      <label class="check"><input type="checkbox" id="stamp"> 「※写真はイメージです」を右下に入れる</label>
+
+      <h2 style="margin-top:16px"><span class="step">4</span>保存する</h2>
+      <input type="text" id="name" placeholder="商品名（ファイル名になります）例：ほっけ炉端焼き">
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="save">この1枚を保存</button>
+      </div>
+      <p class="hint">iPhoneでは「画像を保存」を押すと写真アプリに入ります。</p>
+    </div>
+  </section>
+
+  <!-- ===== タブ2：イメージ画像 ===== -->
+  <section id="tab-gen" class="hidden">
+    <div class="card">
+      <h2><span class="step">1</span>商品名を入れる</h2>
+      <input type="text" id="gname" placeholder="例：のどぐろ塩焼き／本鮪の刺身／ほっけ炉端焼き">
+      <div class="chips" id="gchips"></div>
+      <p class="hint" id="gdetect"></p>
+      <label class="check"><input type="checkbox" id="guseTable" checked> 店のテーブルを背景にする（テーブル写真も一緒に渡す）</label>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">2</span>お願い文をコピーして、Geminiに貼る</h2>
+      <textarea id="gprompt" readonly></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="gcopy">お願い文をコピー</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sub" id="gtable">テーブル写真を保存（Geminiに添付する用）</button>
+      </div>
+      <ol class="tips">
+        <li>Geminiアプリ（無料）を開いて、お願い文を貼る</li>
+        <li>テーブルを背景にする時は、テーブル写真も添付する</li>
+        <li>できた画像を保存して、このページの「撮った写真を仕上げる」で「※写真はイメージです」を入れる</li>
+      </ol>
+      <div class="note">AIで作った画像は実物と違って見えることがあります。お客様に出す前に、量・盛り付け・器が実際の料理と大きく違わないか、必ず目で確かめてください。モバイルオーダーには「※写真はイメージです」を入れるのが安全です。</div>
+    </div>
+
+    <div class="card">
+      <h2>撮った写真をAIで「テーブルの上」に置き直したい時</h2>
+      <p class="hint" style="margin-top:0">切り抜きより自然になりやすい方法です。料理写真とテーブル写真の2枚をGeminiに添付して、下のお願い文を貼ります。</p>
+      <textarea id="eprompt" readonly style="min-height:120px"></textarea>
+      <button class="btn sub" id="ecopy" style="margin-top:8px">このお願い文をコピー</button>
+    </div>
+
+    <div class="card">
+      <h2>このページの中で自動で作る（準備中）</h2>
+      <p class="hint" style="margin-top:0">画像を作るAIの契約（有料・1枚数円〜十数円の目安）をすると、ボタン1つでここに画像が出るようにできます。今はネギさんのOK待ちです。</p>
+      <button class="btn" disabled>自動で作る（準備中）</button>
+    </div>
+  </section>
+</main>
+
+<script src="../lib/heic2any.min.js" defer></script>
+<script type="module">
+const $ = s => document.querySelector(s);
+const TABLE_URL = 'table.jpg';
+const OUT_LONG = 1200;
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  $('#tab-photo').classList.toggle('hidden', b.dataset.tab !== 'photo');
+  $('#tab-gen').classList.toggle('hidden', b.dataset.tab !== 'gen');
+});
+function seg(el, cb){
+  el.querySelectorAll('button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    cb(b.dataset.v);
+  });
+}
+
+/* ---------- state ---------- */
+const items = [];          // {file, name, src:ImageBitmap|canvas, cut:canvas|null, bg:'keep'|'table', zoom, ox, oy}
+let cur = -1;
+let ratio = 1;             // height/width
+let tableImg = null;
+let showOrig = false;
+
+async function loadTable(){
+  if (tableImg) return tableImg;
+  tableImg = await loadImage(TABLE_URL);
+  return tableImg;
+}
+function loadImage(url){
+  return new Promise((ok, ng) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ng; i.src = url; });
+}
+async function fileToImage(file){
+  let blob = file;
+  const isHeic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+  if (isHeic && window.heic2any) {
+    try { blob = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 }); } catch(e) {}
+  }
+  const url = URL.createObjectURL(blob);
+  const img = await loadImage(url);
+  // 大きすぎる写真は先に縮める（iPhoneの写真は4000px超。処理が重くなるため）
+  const max = 2000, s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  return c;
+}
+
+/* ---------- file input ---------- */
+$('#file').onchange = async e => {
+  const files = [...e.target.files];
+  for (const f of files) {
+    const src = await fileToImage(f);
+    const it = { file: f, name: f.name.replace(/\.[^.]+$/, ''), src, cut: null, bg: 'keep', zoom: 1, ox: 0, oy: 0 };
+    items.push(it);
+    const t = document.createElement('img');
+    t.src = src.toDataURL('image/jpeg', 0.6);
+    t.onclick = () => select(items.indexOf(it));
+    $('#thumbs').appendChild(t);
+  }
+  $('#editor').style.display = '';
+  select(items.length - files.length);
+  e.target.value = '';
+};
+function select(i){
+  cur = i;
+  [...$('#thumbs').children].forEach((t, k) => t.classList.toggle('on', k === i));
+  const it = items[i];
+  $('#zoom').value = Math.round(it.zoom * 100);
+  $('#bgmode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === it.bg));
+  $('#name').value = it.name.startsWith('IMG_') ? '' : it.name;
+  render();
+}
+
+/* ---------- background removal (無料・端末の中で動く) ---------- */
+let bgLib = null;
+async function cutout(it){
+  if (it.cut) return it.cut;
+  $('#stage').classList.add('loading');
+  $('#busy').textContent = '料理とお皿を切り抜いています…（初回は準備に1分ほど）';
+  try {
+    if (!bgLib) bgLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm');
+    const blob = await new Promise(r => it.src.toBlob(r, 'image/png'));
+    const out = await bgLib.removeBackground(blob, {
+      model: 'medium',
+      output: { format: 'image/png' },
+      progress: (k, a, b) => { if (b) $('#busy').textContent = `準備中… ${Math.round(a / b * 100)}%`; }
+    });
+    const img = await loadImage(URL.createObjectURL(out));
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    it.cut = trim(c);
+  } finally {
+    $('#stage').classList.remove('loading');
+  }
+  return it.cut;
+}
+function trim(c){ // 透明な余白を切り落とす
+  const ctx = c.getContext('2d'), d = ctx.getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    if (d[(y * c.width + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 <= x0) return c;
+  const o = document.createElement('canvas');
+  o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
+  o.getContext('2d').drawImage(c, -x0, -y0);
+  return o;
+}
+
+/* ---------- compose (crop / table) ---------- */
+function compose(it, W, H, plain){
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  if (it.bg === 'table' && it.cut && tableImg) {
+    // テーブル（画面いっぱい）
+    const ts = Math.max(W / tableImg.naturalWidth, H / tableImg.naturalHeight);
+    g.drawImage(tableImg, (W - tableImg.naturalWidth * ts) / 2, (H - tableImg.naturalHeight * ts) / 2,
+      tableImg.naturalWidth * ts, tableImg.naturalHeight * ts);
+    // 料理を置く
+    const cut = it.cut;
+    const fit = Math.min(W * 0.84 / cut.width, H * 0.80 / cut.height) * it.zoom;
+    const w = cut.width * fit, h = cut.height * fit;
+    const x = (W - w) / 2 + it.ox * W, y = (H - h) / 2 + H * 0.03 + it.oy * H;
+    // 影（ふんわり＋接地）
+    const sh = silhouette(cut);
+    g.save(); g.globalAlpha = 0.55; g.filter = `blur(${Math.round(W * 0.025)}px)`;
+    g.drawImage(sh, x + W * 0.012, y + H * 0.03, w, h); g.restore();
+    g.save(); g.globalAlpha = 0.6; g.filter = `blur(${Math.round(W * 0.006)}px)`;
+    g.drawImage(sh, x, y + H * 0.008, w, h); g.restore();
+    g.drawImage(cut, x, y, w, h);
+    // 料理の場所（テーブルの木目を強調しすぎないため）
+    const m = document.createElement('canvas'); m.width = W; m.height = H;
+    m.getContext('2d').drawImage(cut, x, y, w, h);
+    c._mask = m;
+  } else {
+    const s = it.src;
+    const base = Math.max(W / s.width, H / s.height) * it.zoom;
+    const w = s.width * base, h = s.height * base;
+    let x = (W - w) / 2 + it.ox * W, y = (H - h) / 2 + it.oy * H;
+    // はみ出し防止（黒いすき間を出さない）
+    x = Math.min(0, Math.max(W - w, x)); y = Math.min(0, Math.max(H - h, y));
+    it.ox = (x - (W - w) / 2) / W; it.oy = (y - (H - h) / 2) / H;
+    g.drawImage(s, x, y, w, h);
+  }
+  return c;
+}
+const silCache = new WeakMap();
+function silhouette(cut){
+  if (silCache.has(cut)) return silCache.get(cut);
+  const c = document.createElement('canvas'); c.width = cut.width; c.height = cut.height;
+  const g = c.getContext('2d'); g.drawImage(cut, 0, 0);
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = '#1a0f08'; g.fillRect(0, 0, c.width, c.height);
+  silCache.set(cut, c); return c;
+}
+
+/* ---------- シズル加工 ---------- */
+function boxBlur(src, w, h, r){
+  // 3回の箱ぼかし ≒ ガウスぼかし
+  let a = Float32Array.from(src), b = new Float32Array(src.length);
+  for (let pass = 0; pass < 3; pass++) {
+    for (let y = 0; y < h; y++) { // 横
+      let acc = 0; const row = y * w;
+      for (let x = -r; x <= r; x++) acc += a[row + Math.min(w - 1, Math.max(0, x))];
+      for (let x = 0; x < w; x++) {
+        b[row + x] = acc / (2 * r + 1);
+        acc += a[row + Math.min(w - 1, x + r + 1)] - a[row + Math.max(0, x - r)];
+      }
+    }
+    for (let x = 0; x < w; x++) { // 縦
+      let acc = 0;
+      for (let y = -r; y <= r; y++) acc += b[Math.min(h - 1, Math.max(0, y)) * w + x];
+      for (let y = 0; y < h; y++) {
+        a[y * w + x] = acc / (2 * r + 1);
+        acc += b[Math.min(h - 1, y + r + 1) * w + x] - b[Math.max(0, y - r) * w + x];
+      }
+    }
+  }
+  return a;
+}
+function enhance(canvas, p){
+  const W = canvas.width, H = canvas.height, g = canvas.getContext('2d');
+  const im = g.getImageData(0, 0, W, H), d = im.data, N = W * H;
+  let mk = null;
+  if (canvas._mask) { const md = canvas._mask.getContext('2d').getImageData(0, 0, W, H).data; mk = new Float32Array(N); for (let i = 0; i < N; i++) mk[i] = md[i*4+3] / 255; }
+  const s = p.sizzle / 100;
+  // 明るさ（Y）
+  const L = new Float32Array(N);
+  for (let i = 0; i < N; i++) L[i] = (0.299 * d[i*4] + 0.587 * d[i*4+1] + 0.114 * d[i*4+2]) / 255;
+  // 自動レベル補正（暗すぎ・眠い写真を整える。色は変えない）
+  const hist = new Uint32Array(256); for (let i = 0; i < N; i++) hist[Math.min(255, L[i] * 255 | 0)]++;
+  let lo = 0, hi = 255, acc = 0;
+  for (; lo < 255; lo++) { acc += hist[lo]; if (acc > N * 0.004) break; }
+  acc = 0; for (; hi > 0; hi--) { acc += hist[hi]; if (acc > N * 0.004) break; }
+  const lv = 0.7; // 補正の強さ
+  const lo2 = lo / 255 * lv, hi2 = 1 - (1 - hi / 255) * lv, span = Math.max(0.2, hi2 - lo2);
+  // くっきり（大きいぼかしとの差＝立体感、小さいぼかしとの差＝輪郭）
+  const big = boxBlur(L, W, H, Math.max(2, Math.round(W / 70)));
+  const small = boxBlur(L, W, H, Math.max(1, Math.round(W / 700)));
+  // つや用：明るい所だけ取り出して、ふんわり光らせる
+  const hl = new Float32Array(N);
+  for (let i = 0; i < N; i++) hl[i] = Math.max(0, L[i] - 0.72) / 0.28;
+  const glow = boxBlur(hl, W, H, Math.max(2, Math.round(W / 160)));
+
+  const gamma = Math.pow(2, -p.bright / 50);
+  const warm = p.warm / 100;
+  const clarity = 0.28 * s, sharp = 0.75 * s, curve = 0.45 * s, vib = 0.5 * s, gloss = 0.35 * s, lift = 0.05 * s;
+  const cx = W / 2, cy = H / 2, rmax = Math.hypot(cx, cy), vig = 0.18 * s;
+
+  for (let i = 0; i < N; i++) {
+    let r = d[i*4] / 255, gg = d[i*4+1] / 255, b = d[i*4+2] / 255;
+    const y0 = L[i];
+    // 1) レベル
+    let y = (y0 - lo2) / span;
+    // 2) くっきり（立体感＋輪郭）
+    const fg = mk ? 0.25 + 0.75 * mk[i] : 1; // 背景のテーブルは控えめに
+    y += fg * (clarity * (y0 - big[i]) * 1.6 + sharp * (y0 - small[i]) * 2.2);
+    // 3) 明るさ
+    y = Math.pow(Math.min(1, Math.max(0, y)), gamma);
+    // 4) メリハリ（S字）
+    const sc = y * y * (3 - 2 * y);
+    y = y + (sc - y) * curve;
+    y = y + lift * (1 - y) * y * 2; // 暗くなりすぎないよう中間を少し持ち上げる
+    // 5) つや（ハイライトのにじみ）
+    y += gloss * glow[i] * 0.5;
+    // 明るさの比で色を戻す
+    const k = y0 > 0.003 ? y / y0 : 1;
+    r *= k; gg *= k; b *= k;
+    if (y0 <= 0.003) { r = gg = b = y; }
+    // 6) 色の深み（くすんだ色ほど強めに）
+    const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), sat = mx > 0 ? (mx - mn) / mx : 0;
+    const m = (r + gg + b) / 3, boost = 1 + vib * (1 - sat) * (1 - Math.max(0, y - 0.85) * 4);
+    r = m + (r - m) * boost; gg = m + (gg - m) * boost; b = m + (b - m) * boost;
+    // 7) 温かみ
+    r += warm * 0.35; gg += warm * 0.08; b -= warm * 0.35;
+    // 8) 周辺を少し落として料理に目が行くように
+    const x = i % W, yy = (i / W) | 0;
+    const dist = Math.hypot(x - cx, yy - cy) / rmax, v = 1 - vig * Math.max(0, dist - 0.45) / 0.55;
+    r *= v; gg *= v; b *= v;
+    d[i*4] = r * 255; d[i*4+1] = gg * 255; d[i*4+2] = b * 255;
+  }
+  g.putImageData(im, 0, 0);
+  return canvas;
+}
+function stampLabel(c){
+  const g = c.getContext('2d'), W = c.width, H = c.height;
+  const fs = Math.round(W * 0.028), text = '※写真はイメージです';
+  g.font = `600 ${fs}px -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif`;
+  const tw = g.measureText(text).width, px = fs * 0.6, ph = fs * 0.45;
+  const x = W - tw - px * 2 - W * 0.025, y = H - fs - ph * 2 - H * 0.025;
+  g.fillStyle = 'rgba(0,0,0,.45)';
+  g.beginPath(); g.roundRect(x, y, tw + px * 2, fs + ph * 2, (fs + ph * 2) / 2); g.fill();
+  g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.fillText(text, x + px, y + ph + fs / 2 + 1);
+}
+
+function params(){
+  return { sizzle: +$('#sizzle').value, bright: +$('#bright').value, warm: +$('#warm').value };
+}
+function build(it, W, H, orig){
+  const c = compose(it, W, H);
+  if (!orig) enhance(c, params());
+  if ($('#stamp').checked) stampLabel(c);
+  return c;
+}
+
+/* ---------- 表示 ---------- */
+let pending = false;
+function render(){
+  if (pending) return; pending = true;
+  requestAnimationFrame(async () => {
+    pending = false;
+    const it = items[cur]; if (!it) return;
+    $('#zoomv').textContent = Math.round(it.zoom * 100) + '%';
+    $('#sizzlev').textContent = $('#sizzle').value;
+    $('#brightv').textContent = $('#bright').value;
+    $('#warmv').textContent = $('#warm').value;
+    const v = $('#view');
+    const W = 900, H = Math.round(900 * ratio);
+    v.width = W; v.height = H;
+    $('#stage').style.aspectRatio = `1 / ${ratio}`;
+    if (it.bg === 'table') { await loadTable(); try { await cutout(it); } catch(e) { alert('切り抜きに失敗しました。電波の良い所でもう一度試してください。'); it.bg = 'keep'; select(cur); return; } }
+    const c = build(it, W, H, showOrig);
+    v.getContext('2d').drawImage(c, 0, 0);
+  });
+}
+['zoom','sizzle','bright','warm'].forEach(id => $('#' + id).oninput = () => {
+  if (id === 'zoom' && items[cur]) items[cur].zoom = $('#zoom').value / 100;
+  render();
+});
+$('#stamp').onchange = render;
+$('#name').oninput = () => { if (items[cur]) items[cur].name = $('#name').value; };
+seg($('#bgmode'), v => { if (!items[cur]) return; items[cur].bg = v; items[cur].ox = items[cur].oy = 0; render(); });
+seg($('#ratio'), v => { ratio = +v; render(); });
+const cmp = $('#compare');
+const on = e => { e.preventDefault(); showOrig = true; render(); }, off = () => { showOrig = false; render(); };
+cmp.addEventListener('pointerdown', on); cmp.addEventListener('pointerup', off); cmp.addEventListener('pointerleave', off);
+
+// ドラッグで位置合わせ
+let drag = null;
+$('#view').addEventListener('pointerdown', e => { const it = items[cur]; if (!it) return; drag = { x: e.clientX, y: e.clientY, ox: it.ox, oy: it.oy }; e.target.setPointerCapture(e.pointerId); });
+$('#view').addEventListener('pointermove', e => {
+  if (!drag) return; const it = items[cur], r = e.target.getBoundingClientRect();
+  it.ox = drag.ox + (e.clientX - drag.x) / r.width; it.oy = drag.oy + (e.clientY - drag.y) / r.width;
+  render();
+});
+$('#view').addEventListener('pointerup', () => drag = null);
+
+/* ---------- 保存 ---------- */
+async function shareOrDownload(blob, filename){
+  const file = new File([blob], filename, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return; } catch(e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('#save').onclick = async () => {
+  const it = items[cur]; if (!it) return;
+  const W = OUT_LONG, H = Math.round(OUT_LONG * ratio);
+  const c = build(it, W, H, false);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+  const nm = ($('#name').value || it.name || 'menu').replace(/[\\/:*?"<>|\s]+/g, '_');
+  await shareOrDownload(blob, nm + '.jpg');
+};
+
+/* ---------- タブ2：イメージ画像のお願い文 ---------- */
+const FISH = [
+  ['本鮪|本まぐろ|マグロ|まぐろ|鮪|中トロ|大トロ|赤身','まぐろ'],['サーモン|鮭|しゃけ|さけ','サーモン（鮭）'],
+  ['寒ブリ|ブリ|ぶり|鰤','ぶり'],['はまち|ハマチ','はまち'],['かんぱち|カンパチ|勘八','かんぱち'],
+  ['カツオ|かつお|鰹','かつお'],['しめ鯖|〆鯖|サバ|さば|鯖','さば'],['アジ|あじ|鯵','あじ'],
+  ['イワシ|いわし|鰯','いわし'],['サンマ|さんま|秋刀魚','さんま'],['ホッケ|ほっけ|𩸽','ほっけ'],
+  ['金目鯛|金目|キンメ','金目鯛'],['のどぐろ|ノドグロ|赤むつ|アカムツ','のどぐろ（赤むつ）'],['真鯛|鯛|タイ','真鯛'],
+  ['ひらめ|ヒラメ|平目|鮃','ひらめ'],['カレイ|かれい|鰈','かれい'],['太刀魚|タチウオ','太刀魚'],
+  ['銀だら|銀ダラ|銀鱈','銀だら'],['赤魚','赤魚'],['きんき|キンキ|喜知次','きんき'],['鰆|サワラ|さわら','さわら'],
+  ['イカ|いか|烏賊','いか'],['タコ|たこ|蛸','たこ'],['エビ|えび|海老','えび'],['ホタテ|ほたて|帆立','ほたて'],
+  ['牡蠣|カキ','牡蠣'],['うに|ウニ|雲丹','うに'],['いくら|イクラ','いくら'],['穴子|アナゴ','穴子'],
+  ['うなぎ|ウナギ|鰻','うなぎ'],['しらす|シラス','しらす'],['白子','白子'],['あん肝|あんきも','あん肝'],
+  ['かま|カマ','魚のかま'],['ししゃも|シシャモ','ししゃも'],['鮎|あゆ|アユ','鮎'],['さざえ|サザエ','さざえ']
+];
+const COOK = [
+  ['盛り合わせ|盛合せ|三点盛|五点盛|造り盛','刺身の盛り合わせ。数種類の刺身を、つまや大葉、わさびと一緒に、氷や器の上に彩りよく'],
+  ['刺身|刺し|造り|お造り','刺身。切り身の断面がみずみずしく、つまと大葉、わさびを添えて'],
+  ['炙り','炙り。表面に焼き目、身はしっとり'],['たたき|タタキ','たたき。表面だけ香ばしく焼いて厚切り、薬味（ねぎ・しょうが・にんにく）をのせて'],
+  ['なめろう','なめろう。細かくたたいて味噌と薬味で和え、大葉を添えて'],['カルパッチョ','和風カルパッチョ。薄切りに、オリーブオイルと薬味'],
+  ['漬け|づけ|ヅケ','漬け。醤油だれでつやのある身'],
+  ['炉端|ろばた','炉端焼き。炭火でこんがり焼き、皮はパリッと、身はふっくら。はじかみ・大根おろし・すだちを添えて'],
+  ['西京焼|西京','西京焼き。味噌の香ばしい焼き色'],['照り焼|照焼','照り焼き。たれのつやが光る'],
+  ['一夜干|干物|開き','一夜干し（干物）。炭火でこんがり焼いた開き、大根おろしを添えて'],
+  ['塩焼|焼き|焼','塩焼き。炭火でこんがり、皮はパリッと、身はふっくら。大根おろしとすだちを添えて'],
+  ['煮付|煮つけ|煮魚|あら煮|煮','煮付け。甘辛い煮汁のつや、しょうがとごぼうを添えて'],
+  ['唐揚|から揚|フライ|揚げ','唐揚げ。衣はカリッと、レモンを添えて'],['天ぷら|天麩羅|天','天ぷら。衣は軽くサクッと、塩と天つゆを添えて'],
+  ['酒蒸','酒蒸し。湯気が立つ'],['ポン酢|酢の物','ポン酢和え。もみじおろしとねぎを添えて'],
+  ['丼','海鮮丼'],['寿司|すし|鮨','握り寿司']
+];
+function detect(name){
+  const fish = FISH.find(([re]) => new RegExp(re).test(name));
+  const cook = COOK.find(([re]) => new RegExp(re).test(name));
+  return { fish: fish && fish[1], cook: cook && cook[1] };
+}
+function makePrompt(){
+  const name = $('#gname').value.trim() || '（商品名）';
+  const { fish, cook } = detect(name);
+  $('#gdetect').textContent = `読み取り：魚＝${fish || '不明'}／料理＝${cook ? cook.split('。')[0] : '不明'}（違う時は商品名に「刺身」「塩焼き」などを足してください）`;
+  const useT = $('#guseTable').checked;
+  $('#gprompt').value =
+`居酒屋のモバイルオーダー（スマホで見るメニュー）に使う料理写真を1枚作ってください。
+
+料理名：${name}
+${fish ? `魚：${fish}\n` : ''}${cook ? `内容：${cook}\n` : ''}
+・本物の料理写真に見えるように。CGっぽさ、作りものっぽさは出さない
+・一人前の自然な量と盛り付け。居酒屋らしい和食器（焼きものの皿や木の器）
+・${useT ? '背景は添付したテーブルの写真の木の天板にして、その上に器を置いた形にする' : '背景は暗めの落ち着いた居酒屋の雰囲気'}
+・斜め45度くらいから、料理が画面の中心で大きく見える構図
+・温かみのある照明。つや、みずみずしさ、焼き目など、おいしそうな質感をはっきり
+・文字、ロゴ、人の手、箸は入れない
+・正方形（1:1）`;
+  $('#eprompt').value =
+`添付の1枚目は料理の写真、2枚目はお店のテーブルの写真です。
+1枚目の料理（器ごと）を、2枚目のテーブルの木の天板の上に置いた写真にしてください。
+
+・料理の形、量、盛り付け、器は変えない（中身を足したり減らしたりしない）
+・照明と影をテーブルに合わせて、本当にその上で撮ったように自然に
+・少し明るく、色とつやをくっきりさせて、おいしそうに
+・文字は入れない
+・正方形（1:1）`;
+}
+const SAMPLES = ['ほっけ炉端焼き','本鮪の刺身','のどぐろ塩焼き','金目鯛の煮付け','鰹のたたき','刺身五点盛り'];
+SAMPLES.forEach(s => { const b = document.createElement('button'); b.textContent = s; b.onclick = () => { $('#gname').value = s; makePrompt(); }; $('#gchips').appendChild(b); });
+$('#gname').oninput = makePrompt; $('#guseTable').onchange = makePrompt;
+makePrompt();
+async function copy(t, btn){
+  try { await navigator.clipboard.writeText(t); } catch(e) { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const o = btn.textContent; btn.textContent = 'コピーしました'; setTimeout(() => btn.textContent = o, 1500);
+}
+$('#gcopy').onclick = e => copy($('#gprompt').value, e.target);
+$('#ecopy').onclick = e => copy($('#eprompt').value, e.target);
+$('#gtable').onclick = async () => { const r = await fetch(TABLE_URL); await shareOrDownload(await r.blob(), 'robata-table.jpg'); };
+</script>
+</body>
+</html>

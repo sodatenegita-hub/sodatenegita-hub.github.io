@@ -14,7 +14,7 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return; // Firebase・フォント等は触らない
   e.respondWith(
     fetch(req).then(res => {
-      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req.mode === 'navigate' ? '/' : req, copy)); }
+      if (res.ok && (req.mode !== 'navigate' || url.pathname === '/')) { // 縁側以外のページ（料理写真メーカー等）を縁側の控えとして保存しない const copy = res.clone(); caches.open(CACHE).then(c => c.put(req.mode === 'navigate' ? '/' : req, copy)); }
       return res;
     }).catch(() => caches.match(req.mode === 'navigate' ? '/' : req))
   );
