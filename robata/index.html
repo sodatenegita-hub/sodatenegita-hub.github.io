@@ -93,7 +93,7 @@ a{color:var(--accent)}
         <button aria-pressed="true" data-v="keep">そのまま<br><small>テーブルで撮った</small></button>
         <button aria-pressed="false" data-v="table">テーブルに差し替え<br><small>別の場所で撮った</small></button>
       </div>
-      <p class="hint" id="bghint">差し替えは、料理とお皿だけを切り抜いて、店のテーブルの上に置き直します。初回だけ準備に1分ほどかかります。</p>
+      <p class="hint" id="bghint">差し替えは、料理とお皿だけを切り抜いて、店のテーブルの上に置き直します。初回だけ準備（約80MBの読み込み）があるので、Wi-Fiのある所で使ってください。</p>
 
       <h2 style="margin-top:16px"><span class="step">3</span>仕上がりを見る</h2>
       <div class="stage" id="stage">
@@ -252,7 +252,7 @@ let bgLib = null;
 async function cutout(it){
   if (it.cut) return it.cut;
   $('#stage').classList.add('loading');
-  $('#busy').textContent = '料理とお皿を切り抜いています…（初回は準備に1分ほど）';
+  $('#busy').textContent = '料理とお皿を切り抜いています…（初回はWi-Fiで準備します）';
   try {
     if (!bgLib) bgLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm');
     const blob = await new Promise(r => it.src.toBlob(r, 'image/png'));
