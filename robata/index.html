@@ -91,9 +91,12 @@ a{color:var(--accent)}
       <h2><span class="step">2</span>背景を選ぶ</h2>
       <div class="seg" id="bgmode">
         <button aria-pressed="true" data-v="keep">そのまま<br><small>テーブルで撮った</small></button>
-        <button aria-pressed="false" data-v="table">テーブルに差し替え<br><small>別の場所で撮った</small></button>
+        <button aria-pressed="false" data-v="table">テーブルに<br><small>自動で切り抜き</small></button>
+        <button aria-pressed="false" data-v="plate">テーブルに<br><small>丸皿の形で切る</small></button>
       </div>
-      <p class="hint" id="bghint">差し替えは、料理とお皿だけを切り抜いて、店のテーブルの上に置き直します。初回だけ準備（約80MBの読み込み）があるので、Wi-Fiのある所で使ってください。</p>
+      <p class="hint" id="bghint">「自動で切り抜き」は料理とお皿だけを切り抜いて、店のテーブルの上に置き直します（初回だけ約45MBの準備。Wi-Fiで）。うまくいかない時は「丸皿の形で切る」：写真を動かして、お皿のふちを丸い切り口に合わせます。</p>
+      <div class="slider hidden" id="ovalbox"><div class="top"><span>切り口の形（丸⇔横長の楕円）</span><span id="ovalv"></span></div>
+        <input type="range" id="oval" min="50" max="100" value="80"></div>
 
       <h2 style="margin-top:16px"><span class="step">3</span>仕上がりを見る</h2>
       <div class="stage" id="stage">
@@ -104,7 +107,7 @@ a{color:var(--accent)}
       <p class="hint">写真を指で動かすと位置を変えられます。</p>
 
       <div class="slider"><div class="top"><span>大きさ</span><span id="zoomv"></span></div>
-        <input type="range" id="zoom" min="100" max="250" value="100"></div>
+        <input type="range" id="zoom" min="40" max="250" value="100"></div>
       <div class="slider"><div class="top"><span>シズル感（つや・色・くっきり）</span><span id="sizzlev"></span></div>
         <input type="range" id="sizzle" min="0" max="100" value="60"></div>
       <div class="slider"><div class="top"><span>明るさ</span><span id="brightv"></span></div>
@@ -113,7 +116,7 @@ a{color:var(--accent)}
         <input type="range" id="warm" min="-30" max="30" value="6"></div>
 
       <div class="seg" id="ratio" style="margin-top:6px">
-        <button aria-pressed="true" data-v="1">正方形 1:1</button>
+        <button aria-pressed="true" data-v="1">正方形（LINEで注文）</button>
         <button aria-pressed="false" data-v="0.75">横長 4:3</button>
       </div>
 
@@ -124,7 +127,7 @@ a{color:var(--accent)}
       <div class="row" style="margin-top:10px">
         <button class="btn" id="save">この1枚を保存</button>
       </div>
-      <p class="hint">iPhoneでは「画像を保存」を押すと写真アプリに入ります。</p>
+      <p class="hint">iPhoneでは「画像を保存」を押すと写真アプリに入ります。正方形は1080×1080のJPEGで、LINEで注文の推奨（1080×1080・10MBまで）に合わせています。</p>
     </div>
   </section>
 
@@ -174,7 +177,7 @@ a{color:var(--accent)}
 <script type="module">
 const $ = s => document.querySelector(s);
 const TABLE_URL = 'table.jpg';
-const OUT_LONG = 1200;
+const OUT_LONG = 1080; // LINEで注文の推奨：1080×1080、JPEG/PNG、10MBまで
 
 /* ---------- tabs ---------- */
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
@@ -226,7 +229,7 @@ $('#file').onchange = async e => {
   const files = [...e.target.files];
   for (const f of files) {
     const src = await fileToImage(f);
-    const it = { file: f, name: f.name.replace(/\.[^.]+$/, ''), src, cut: null, bg: 'keep', zoom: 1, ox: 0, oy: 0 };
+    const it = { file: f, name: f.name.replace(/\.[^.]+$/, ''), src, cut: null, bg: 'keep', zoom: 1, ox: 0, oy: 0, oval: 0.8 };
     items.push(it);
     const t = document.createElement('img');
     t.src = src.toDataURL('image/jpeg', 0.6);
@@ -242,6 +245,7 @@ function select(i){
   [...$('#thumbs').children].forEach((t, k) => t.classList.toggle('on', k === i));
   const it = items[i];
   $('#zoom').value = Math.round(it.zoom * 100);
+  $('#oval').value = Math.round((it.oval || 0.8) * 100);
   $('#bgmode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === it.bg));
   $('#name').value = it.name.startsWith('IMG_') ? '' : it.name;
   render();
@@ -254,10 +258,10 @@ async function cutout(it){
   $('#stage').classList.add('loading');
   $('#busy').textContent = '料理とお皿を切り抜いています…（初回はWi-Fiで準備します）';
   try {
-    if (!bgLib) bgLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm');
+    if (!bgLib) bgLib = await import('./bgr.mjs'); // 外部CDNの自動変換版は壊れていたため、この中に置いた版を使う
     const blob = await new Promise(r => it.src.toBlob(r, 'image/png'));
     const out = await bgLib.removeBackground(blob, {
-      model: 'medium',
+      model: 'small', // iPhoneの記憶容量で落ちにくい軽い方
       output: { format: 'image/png' },
       progress: (k, a, b) => { if (b) $('#busy').textContent = `準備中… ${Math.round(a / b * 100)}%`; }
     });
@@ -310,9 +314,27 @@ function compose(it, W, H, plain){
     const m = document.createElement('canvas'); m.width = W; m.height = H;
     m.getContext('2d').drawImage(cut, x, y, w, h);
     c._mask = m;
+  } else if (it.bg === 'plate' && tableImg) {
+    const ts = Math.max(W / tableImg.naturalWidth, H / tableImg.naturalHeight);
+    g.drawImage(tableImg, (W - tableImg.naturalWidth * ts) / 2, (H - tableImg.naturalHeight * ts) / 2,
+      tableImg.naturalWidth * ts, tableImg.naturalHeight * ts);
+    const s = it.src, base = Math.max(W / s.width, H / s.height) * it.zoom;
+    const w = s.width * base, h = s.height * base;
+    const x = (W - w) / 2 + it.ox * W, y = (H - h) / 2 + it.oy * H;
+    const cx = W / 2, cy = H / 2 + H * 0.02, rx = Math.min(W, H / (it.oval || 0.8)) * 0.43, ry = rx * (it.oval || 0.8);
+    const ell = (ctx, blur) => { ctx.save(); if (blur) ctx.filter = `blur(${blur}px)`; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); };
+    // 影
+    g.save(); g.fillStyle = 'rgba(26,15,8,.55)'; g.translate(W * 0.012, H * 0.03); ell(g, Math.round(W * 0.025)); g.restore();
+    g.save(); g.fillStyle = 'rgba(26,15,8,.6)'; g.translate(0, H * 0.008); ell(g, Math.round(W * 0.006)); g.restore();
+    // 写真を楕円で切る（ふちは少しぼかす）
+    const m = document.createElement('canvas'); m.width = W; m.height = H;
+    const mg = m.getContext('2d'); mg.drawImage(s, x, y, w, h);
+    mg.globalCompositeOperation = 'destination-in'; mg.fillStyle = '#000'; ell(mg, Math.max(1, Math.round(W / 500)));
+    g.drawImage(m, 0, 0);
+    c._mask = m;
   } else {
     const s = it.src;
-    const base = Math.max(W / s.width, H / s.height) * it.zoom;
+    const base = Math.max(W / s.width, H / s.height) * Math.max(1, it.zoom);
     const w = s.width * base, h = s.height * base;
     let x = (W - w) / 2 + it.ox * W, y = (H - h) / 2 + it.oy * H;
     // はみ出し防止（黒いすき間を出さない）
@@ -455,13 +477,20 @@ function render(){
     const W = 900, H = Math.round(900 * ratio);
     v.width = W; v.height = H;
     $('#stage').style.aspectRatio = `1 / ${ratio}`;
-    if (it.bg === 'table') { await loadTable(); try { await cutout(it); } catch(e) { alert('切り抜きに失敗しました。電波の良い所でもう一度試してください。'); it.bg = 'keep'; select(cur); return; } }
+    $('#ovalbox').classList.toggle('hidden', it.bg !== 'plate');
+    $('#ovalv').textContent = it.bg === 'plate' ? Math.round((it.oval || 0.8) * 100) : '';
+    if (it.bg === 'plate') await loadTable();
+    if (it.bg === 'table') { await loadTable(); try { await cutout(it); } catch(e) {
+      console.error(e);
+      alert('自動の切り抜きができませんでした。「丸皿の形で切る」に切り替えます。\n（原因：' + String(e && e.message || e).slice(0, 120) + '）');
+      it.bg = 'plate'; it.ox = it.oy = 0; select(cur); return; } }
     const c = build(it, W, H, showOrig);
     v.getContext('2d').drawImage(c, 0, 0);
   });
 }
-['zoom','sizzle','bright','warm'].forEach(id => $('#' + id).oninput = () => {
+['zoom','sizzle','bright','warm','oval'].forEach(id => $('#' + id).oninput = () => {
   if (id === 'zoom' && items[cur]) items[cur].zoom = $('#zoom').value / 100;
+  if (id === 'oval' && items[cur]) items[cur].oval = $('#oval').value / 100;
   render();
 });
 $('#stamp').onchange = render;
