@@ -121,6 +121,8 @@ a{color:var(--accent)}
       </div>
 
       <label class="check"><input type="checkbox" id="stamp"> 「※写真はイメージです」を右下に入れる</label>
+      <button class="btn sub" id="aiplace" style="margin-top:4px">AIでテーブルの上に置き直す（有料・10円前後）</button>
+      <p class="hint" id="aiplacest">料理の形・量・器は変えないように頼みます。できた画像は新しい1枚として下に並びます。</p>
 
       <h2 style="margin-top:16px"><span class="step">4</span>保存する</h2>
       <input type="text" id="name" placeholder="商品名（ファイル名になります）例：ほっけ炉端焼き">
@@ -165,10 +167,17 @@ a{color:var(--accent)}
       <button class="btn sub" id="ecopy" style="margin-top:8px">このお願い文をコピー</button>
     </div>
 
-    <div class="card">
-      <h2>このページの中で自動で作る（準備中）</h2>
-      <p class="hint" style="margin-top:0">画像を作るAIの契約（有料・1枚数円〜十数円の目安）をすると、ボタン1つでここに画像が出るようにできます。今はネギさんのOK待ちです。</p>
-      <button class="btn" disabled>自動で作る（準備中）</button>
+    <div class="card" id="aicard">
+      <h2>ボタン1つで作る（Gemini・有料）</h2>
+      <p class="hint" style="margin-top:0">上の商品名とテーブルの設定で、この中で画像を作ります。1枚 約0.067ドル（10円前後。為替で変わります）。できた画像は「撮った写真を仕上げる」に入り、「※写真はイメージです」が付きます。</p>
+      <div id="keybox">
+        <input type="password" id="apikey" placeholder="GeminiのAPIキー（AIza…）" autocomplete="off">
+        <div class="row" style="margin-top:8px"><button class="btn sub" id="keysave">このiPhoneに覚えさせる</button></div>
+        <p class="hint">キーはこのiPhoneの中だけに保存します。画像を作る時にGoogleへ送るだけで、ほかには送りません。</p>
+      </div>
+      <p class="hint hidden" id="keyok">キー登録済み（<a href="#" id="keyclear">消す</a>）</p>
+      <button class="btn" id="gen" style="margin-top:8px">この商品名で画像を作る</button>
+      <p class="hint" id="genst"></p>
     </div>
   </section>
 </main>
@@ -224,18 +233,19 @@ async function fileToImage(file){
   return c;
 }
 
+function addItem(src, name, extra){
+  const it = Object.assign({ name, src, cut: null, bg: 'keep', zoom: 1, ox: 0, oy: 0, oval: 0.8, stamp: false }, extra || {});
+  items.push(it);
+  const t = document.createElement('img');
+  t.src = src.toDataURL('image/jpeg', 0.6);
+  t.onclick = () => select(items.indexOf(it));
+  $('#thumbs').appendChild(t);
+  return it;
+}
 /* ---------- file input ---------- */
 $('#file').onchange = async e => {
   const files = [...e.target.files];
-  for (const f of files) {
-    const src = await fileToImage(f);
-    const it = { file: f, name: f.name.replace(/\.[^.]+$/, ''), src, cut: null, bg: 'keep', zoom: 1, ox: 0, oy: 0, oval: 0.8 };
-    items.push(it);
-    const t = document.createElement('img');
-    t.src = src.toDataURL('image/jpeg', 0.6);
-    t.onclick = () => select(items.indexOf(it));
-    $('#thumbs').appendChild(t);
-  }
+  for (const f of files) addItem(await fileToImage(f), f.name.replace(/\.[^.]+$/, ''));
   $('#editor').style.display = '';
   select(items.length - files.length);
   e.target.value = '';
@@ -246,6 +256,7 @@ function select(i){
   const it = items[i];
   $('#zoom').value = Math.round(it.zoom * 100);
   $('#oval').value = Math.round((it.oval || 0.8) * 100);
+  $('#stamp').checked = !!it.stamp;
   $('#bgmode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === it.bg));
   $('#name').value = it.name.startsWith('IMG_') ? '' : it.name;
   render();
@@ -458,7 +469,7 @@ function params(){
 function build(it, W, H, orig){
   const c = compose(it, W, H);
   if (!orig) enhance(c, params());
-  if ($('#stamp').checked) stampLabel(c);
+  if (it.stamp) stampLabel(c);
   return c;
 }
 
@@ -493,7 +504,7 @@ function render(){
   if (id === 'oval' && items[cur]) items[cur].oval = $('#oval').value / 100;
   render();
 });
-$('#stamp').onchange = render;
+$('#stamp').onchange = () => { if (items[cur]) items[cur].stamp = $('#stamp').checked; render(); };
 $('#name').oninput = () => { if (items[cur]) items[cur].name = $('#name').value; };
 seg($('#bgmode'), v => { if (!items[cur]) return; items[cur].bg = v; items[cur].ox = items[cur].oy = 0; render(); });
 seg($('#ratio'), v => { ratio = +v; render(); });
@@ -601,6 +612,91 @@ async function copy(t, btn){
 $('#gcopy').onclick = e => copy($('#gprompt').value, e.target);
 $('#ecopy').onclick = e => copy($('#eprompt').value, e.target);
 $('#gtable').onclick = async () => { const r = await fetch(TABLE_URL); await shareOrDownload(await r.blob(), 'robata-table.jpg'); };
+
+/* ---------- Gemini（有料）で作る ---------- */
+const KEY_NAME = 'robata-gemini-key';
+const getKey = () => { try { return localStorage.getItem(KEY_NAME) || ''; } catch(e) { return ''; } };
+function showKey(){ const k = !!getKey(); $('#keybox').classList.toggle('hidden', k); $('#keyok').classList.toggle('hidden', !k); }
+$('#keysave').onclick = () => {
+  const v = $('#apikey').value.trim(); if (!v) return;
+  try { localStorage.setItem(KEY_NAME, v); } catch(e) { alert('このブラウザでは保存できませんでした（プライベートブラウズでは保存できません）'); }
+  $('#apikey').value = ''; showKey();
+};
+$('#keyclear').onclick = e => { e.preventDefault(); try { localStorage.removeItem(KEY_NAME); } catch(_) {} showKey(); };
+showKey();
+
+function toB64(canvasOrImg, max = 1024){
+  const w0 = canvasOrImg.naturalWidth || canvasOrImg.width, h0 = canvasOrImg.naturalHeight || canvasOrImg.height;
+  const s = Math.min(1, max / Math.max(w0, h0)), c = document.createElement('canvas');
+  c.width = Math.round(w0 * s); c.height = Math.round(h0 * s);
+  c.getContext('2d').drawImage(canvasOrImg, 0, 0, c.width, c.height);
+  return { inlineData: { mimeType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] } };
+}
+const MODELS = ['gemini-3.1-flash-image', 'gemini-2.5-flash-image'];
+async function geminiImage(parts){
+  const key = getKey();
+  if (!key) throw new Error('APIキーがまだ登録されていません（「イメージ画像を作る」の一番下で登録）');
+  let last = '';
+  for (const model of MODELS) for (const ver of ['v1beta', 'v1']) for (const withCfg of [true, false]) {
+    const body = { contents: [{ parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } };
+    if (withCfg) body.generationConfig.imageConfig = { aspectRatio: '1:1' };
+    const r = await fetch(`https://generativelanguage.googleapis.com/${ver}/models/${model}:generateContent`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body) });
+    const t = await r.text();
+    if (r.status === 404) { last = `${model}が見つかりません`; break; }       // 次の版・次のモデルへ
+    if (r.status === 400 && withCfg && /imageConfig|image_config|Unknown name|Invalid JSON payload/i.test(t)) { last = t; continue; }
+    if (r.status === 400 || r.status === 401 || r.status === 403) {
+      if (/API key not valid|API_KEY_INVALID/i.test(t)) throw new Error('APIキーが正しくないようです。登録し直してください');
+      if (/billing|FAILED_PRECONDITION|free tier|quota/i.test(t)) throw new Error('Googleの支払い設定がまだのようです（画像づくりは無料枠がありません）');
+      throw new Error(`Googleから断られました（${r.status}）：${t.slice(0, 160)}`);
+    }
+    if (r.status === 429) throw new Error('混み合っているか、使える回数の上限です。少し待ってからもう一度');
+    if (!r.ok) throw new Error(`Googleでエラー（${r.status}）：${t.slice(0, 160)}`);
+    const j = JSON.parse(t);
+    const ps = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    const ip = ps.filter(p => (p.inlineData || p.inline_data) && !p.thought).pop();
+    if (!ip) throw new Error('画像が返ってきませんでした。' + (((ps.find(p => p.text) || {}).text) || (j.promptFeedback && j.promptFeedback.blockReason) || '').slice(0, 120));
+    const d = ip.inlineData || ip.inline_data;
+    const img = await loadImage(`data:${d.mimeType || d.mime_type || 'image/png'};base64,${d.data}`);
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    return c;
+  }
+  throw new Error('画像を作るAIにつながりませんでした：' + String(last).slice(0, 160));
+}
+function goPhoto(it){
+  $('#editor').style.display = '';
+  document.querySelector('.tabs button[data-tab=photo]').click();
+  select(items.indexOf(it));
+  $('#editor').scrollIntoView({ behavior: 'smooth' });
+}
+$('#gen').onclick = async () => {
+  const btn = $('#gen'), st = $('#genst'), name = $('#gname').value.trim();
+  if (!name) { st.textContent = '先に商品名を入れてください'; return; }
+  btn.disabled = true; st.textContent = '作っています…（20〜40秒ほど）';
+  try {
+    const parts = [{ text: $('#gprompt').value }];
+    if ($('#guseTable').checked) parts.push(toB64(await loadTable()));
+    const c = await geminiImage(parts);
+    const it = addItem(c, name + '_イメージ', { stamp: true });
+    st.textContent = 'できました。「撮った写真を仕上げる」に入れました。実物と違わないか、必ず目で確かめてください。';
+    goPhoto(it);
+  } catch(e) { st.textContent = 'できませんでした：' + e.message; }
+  btn.disabled = false;
+};
+$('#aiplace').onclick = async () => {
+  const it = items[cur]; if (!it) return;
+  const btn = $('#aiplace'), st = $('#aiplacest');
+  btn.disabled = true; st.textContent = 'AIが置き直しています…（20〜40秒ほど）';
+  try {
+    makePrompt();
+    const c = await geminiImage([{ text: $('#eprompt').value }, toB64(it.src), toB64(await loadTable())]);
+    const nit = addItem(c, (it.name || 'menu') + '_AI', { stamp: it.stamp });
+    st.textContent = 'できました。下の一覧の最後に入れました。料理の形や量が変わっていないか確かめてください。';
+    select(items.indexOf(nit));
+  } catch(e) { st.textContent = 'できませんでした：' + e.message; }
+  btn.disabled = false;
+};
 </script>
 </body>
 </html>
