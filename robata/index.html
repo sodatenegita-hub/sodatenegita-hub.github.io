@@ -131,8 +131,9 @@ a{color:var(--accent)}
       </div>
 
       <label class="check"><input type="checkbox" id="stamp"> 「※写真はイメージです」を右下に入れる</label>
-      <button class="btn sub" id="aiplace" style="margin-top:4px">AIでテーブルの上に置き直す（有料・10円前後）</button>
-      <p class="hint" id="aiplacest">料理の形・量・器は変えないように頼みます。できた画像は新しい1枚として下に並びます。</p>
+      <button class="btn" id="gemshare" style="margin-top:4px">Geminiアプリで自然に置き直す（無料）</button>
+      <p class="hint" id="gemst">料理写真と店のテーブル写真の2枚をGeminiに渡します。お願い文はコピー済みになるので、Geminiの入力欄に貼って送るだけ。できた画像を保存したら、上の「写真を選ぶ」から読み込んで仕上げ・保存できます。</p>
+      <button class="hidden" id="aiplace"></button><p class="hidden" id="aiplacest"></p>
 
       <h2 style="margin-top:16px"><span class="step">4</span>保存する</h2>
       <input type="text" id="name" placeholder="商品名（ファイル名になります）例：ほっけ炉端焼き">
@@ -177,7 +178,7 @@ a{color:var(--accent)}
       <button class="btn sub" id="ecopy" style="margin-top:8px">このお願い文をコピー</button>
     </div>
 
-    <div class="card" id="aicard">
+    <div class="card hidden" id="aicard">
       <h2>ボタン1つで作る（Gemini・有料）</h2>
       <p class="hint" style="margin-top:0">上の商品名とテーブルの設定で、この中で画像を作ります。1枚 約0.067ドル（10円前後。為替で変わります）。できた画像は「撮った写真を仕上げる」に入り、「※写真はイメージです」が付きます。</p>
       <div id="keybox">
@@ -663,6 +664,9 @@ ${fish ? `魚：${fish}\n` : ''}${cook ? `内容：${cook}\n` : ''}
 1枚目の料理（器ごと）を、2枚目のテーブルの木の天板の上に置いた写真にしてください。
 
 ・料理の形、量、盛り付け、器は変えない（中身を足したり減らしたりしない）
+・器のふちが写真の外で切れている時だけ、同じ器として自然に描き足す
+・テーブルの天板の上に器が置かれ、器の下に自然な接地の影がある状態に
+・カメラの角度は斜め上（45度くらい）。テーブルの遠くは少しぼける
 ・照明と影をテーブルに合わせて、本当にその上で撮ったように自然に
 ・少し明るく、色とつやをくっきりさせて、おいしそうに
 ・文字は入れない
@@ -750,6 +754,24 @@ $('#gen').onclick = async () => {
     goPhoto(it);
   } catch(e) { st.textContent = 'できませんでした：' + e.message; }
   btn.disabled = false;
+};
+$('#gemshare').onclick = async () => {
+  const it = items[cur]; if (!it) return;
+  makePrompt();
+  const text = $('#eprompt').value;
+  try { await navigator.clipboard.writeText(text); } catch(e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const toFile = async (src, name) => {
+    const c = document.createElement('canvas'), w0 = src.naturalWidth || src.width, h0 = src.naturalHeight || src.height, k = Math.min(1, 1600 / Math.max(w0, h0));
+    c.width = Math.round(w0 * k); c.height = Math.round(h0 * k); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return new File([await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9))], name, { type: 'image/jpeg' });
+  };
+  const files = [await toFile(it.src, '1-ryouri.jpg'), await toFile(await loadTable(), '2-table.jpg')];
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try { await navigator.share({ files, text }); $('#gemst').textContent = '共有の画面でGeminiを選んでください（出てこない時は「その他」から）。お願い文はコピー済みです。'; return; }
+    catch(e) { if (e.name === 'AbortError') return; }
+  }
+  for (const f of files) { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }
+  $('#gemst').innerHTML = '2枚を保存し、お願い文をコピーしました。<a href="https://gemini.google.com/app" target="_blank" rel="noopener">Geminiを開く</a>で2枚を添付して、お願い文を貼ってください。';
 };
 $('#aiplace').onclick = async () => {
   const it = items[cur]; if (!it) return;
