@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SODATE｜配る用の1枚</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Klee+One:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500&text=%E7%A6%B0&display=swap" rel="stylesheet">
+<style>
+@page{size:A4 portrait;margin:0}
+:root{--ink:#2E2A26;--sub:#7A716A;--line:#ECE6DF;--soft:#FFF4E6;--orange:#E8862A;--mark:#FD8524;--brown:#716658}
+*{box-sizing:border-box}
+html,body{margin:0;background:#EEE9E3}
+body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;color:var(--ink);line-height:1.7;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{max-width:210mm;margin:0 auto;padding:12px 16px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:13px;color:var(--sub)}
+.bar button{min-height:40px;padding:0 18px;border-radius:999px;border:none;background:var(--mark);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.sheet{width:210mm;height:296mm;overflow:hidden;margin:0 auto 24px;background:#fff;padding:18mm 16mm 14mm;display:flex;flex-direction:column}
+.head{text-align:center}
+.logo{width:28mm;height:auto;aspect-ratio:282/274;flex:none;display:block;margin:0 auto 4mm}
+.catch{font-family:"Klee One",serif;font-weight:600;color:var(--brown);font-size:17pt;margin:0 0 5mm}
+.kana{font-size:8.5pt;color:var(--sub);letter-spacing:.12em;margin:0}
+.name{font-weight:700;font-size:16pt;letter-spacing:.06em;margin:0}
+.name .ne{font-family:"Noto Sans JP","Zen Maru Gothic",sans-serif}
+.role{font-size:10pt;color:var(--orange);margin:0 0 5mm}
+.prof{background:var(--soft);border-radius:5mm;padding:4mm 6mm;font-size:10.5pt;max-width:150mm;margin:0 auto;text-align:left}
+.prof p{margin:0}
+.grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,minmax(0,1fr));gap:5mm;margin-top:7mm}
+.cell{min-height:0;justify-content:center;border:0.4mm solid var(--line);border-radius:5mm;padding:4mm 5mm;display:flex;flex-direction:column;align-items:center;text-align:center}
+.cell img{width:34mm;height:34mm;flex:none}
+.cell .t{font-weight:700;font-size:13pt;margin:3mm 0 0}
+.cell .t small{font-weight:500;font-size:9pt;color:var(--sub);margin-left:2mm}
+.cell .d{font-size:9.5pt;color:var(--sub);margin:1mm 0 0;line-height:1.6}
+.foot{flex:none;margin-top:6mm;display:flex;align-items:center;justify-content:center;gap:5mm;font-size:9.5pt;color:var(--sub)}
+.foot img{width:20mm;height:20mm;flex:none}
+@media print{
+  html,body{background:#fff}
+  .bar{display:none}
+  .sheet{margin:0}
+}
+@media screen and (max-width:820px){
+  .sheet{zoom:.5}
+}
+</style>
+</head>
+<body>
+<div class="bar"><span>A4・1枚。研修や店頭で配る用です。</span><button type="button" onclick="print()">印刷する</button></div>
+
+<article class="sheet">
+  <header class="head">
+    <img class="logo" src="logo.svg" alt="SODATE" width="282" height="274">
+    <p class="catch">あなたの中にあるものを、一緒に育てる</p>
+    <p class="kana">ねぎた けんじ</p>
+    <p class="name"><span class="ne">禰</span>冝田 賢二</p>
+    <p class="role">SODATE 代表／飲食の接客研修</p>
+    <div class="prof">
+      <p>飲食の接客を、25年。約50万人のお客様と向き合ってきました。</p>
+      <p>29歳で研修をまかされ、2022年にSODATEを始めました。</p>
+      <p>いまも、ほぼ毎日お店に立っています。</p>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="cell">
+      <img src="qr-dougu.svg" alt="接客の道具箱のQRコード">
+      <p class="t">接客の道具箱<small>無料</small></p>
+      <p class="d">営業中に、すぐ使える。<br>英語で接客・1分の動画・接客のコツ</p>
+    </div>
+    <div class="cell">
+      <img src="qr-note.svg" alt="noteのQRコード">
+      <p class="t">note<small>読む</small></p>
+      <p class="d">お店で学んだ、人を育てる話。<br>仕事と暮らしの両方に効く「ひとこと」</p>
+    </div>
+    <div class="cell">
+      <img src="qr-ig.svg" alt="InstagramのQRコード">
+      <p class="t">Instagram<small>@sodate.01</small></p>
+      <p class="d">noteの話を、30秒ほどの動画に</p>
+    </div>
+    <div class="cell">
+      <img src="qr-tiktok.svg" alt="TikTokのQRコード">
+      <p class="t">TikTok<small>@negita.sodate</small></p>
+      <p class="d">同じ動画を、TikTokでも</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <img src="qr-page.svg" alt="まとめページのQRコード">
+    <span>4つの入口をまとめたページ<br>sodatenegita-hub.github.io/hello/</span>
+  </footer>
+</article>
+</body>
+</html>
